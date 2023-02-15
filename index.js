@@ -6,6 +6,35 @@ if (typeof AFRAME === 'undefined') {
   throw new Error('Component attempted to register before AFRAME was available.');
 }
 
+/** Convert a 2D array into a CSV string
+ */
+function arrayToCsv(data){
+  return data.map(row =>
+      row
+          .map(String)  // convert every value to String
+          .map(v => v.replaceAll('"', '""'))  // escape double colons
+          .map(v => `"${v}"`)  // quote it
+          .join(',')  // comma-separated
+  ).join('\r\n');  // rows starting on new lines
+}
+
+/** Download contents as a file
+ * Source: https://stackoverflow.com/questions/14964035/how-to-export-javascript-array-info-to-csv-on-client-side
+ */
+function downloadBlob(content, filename, contentType) {
+  // Create a blob
+  var blob = new Blob([content], { type: contentType });
+  var url = URL.createObjectURL(blob);
+
+  // Create a link to download it
+  var pom = document.createElement('a');
+  pom.href = url;
+  pom.setAttribute('download', filename);
+  pom.click();
+}
+
+
+
 const POINT_CLOUD_COLORING = {
   white: PointCloudColoring.White,
   intensity: PointCloudColoring.Intensity,
@@ -16,6 +45,7 @@ const POINT_CLOUD_COLORING = {
 AFRAME.registerComponent('loader-las', {
   schema: {
     url: { type: 'string' },
+    downid: { type: 'string' },
     cameraEl: { type: 'selector' },
     maximumSSE: { type: 'int', default: 16 },
     maximumMem: { type: 'int', default: 32 },
@@ -30,7 +60,7 @@ AFRAME.registerComponent('loader-las', {
     // const size = new THREE.Vector2();
     // this.el.renderer.getSize(size);
     // this.renderer.setSize(size.x, size.y)
-     console.log("aframe init");
+    //  console.log("aframe init");
     // this.camera = this.data.cameraEl?.object3D.children[0] ?? document.querySelector('a-scene').camera;
     // if (!this.camera) {
     //   throw new Error('3D Tiles: Please add an active camera or specify the target camera via the cameraEl property');
@@ -38,26 +68,86 @@ AFRAME.registerComponent('loader-las', {
     // console.log(this);
     // const sph = document.getElementById("sph");
     // console.log(sph);
-     const model = await this._initCloud();
-     console.log(model);
+
+    let downloadcsv = function()
+    {
+      let csv = arrayToCsv([
+        [1, '2', '"3"'],
+        [true, null, undefined],
+      ]);
+      downloadBlob(csv, 'export.csv', 'text/csv;charset=utf-8;')
+      console.log("download")
+    }
+
+    var button = document.querySelector(this.data.downid);
+    console.log("button found 2 -")
+    console.log(button)
+    button.style.cursor = "pointer";
+
+    button.addEventListener('click', downloadcsv);
+
+    const model = await this._initCloud();
+     // console.log(model);
 
     // Create geometry.
     this.geometry = new BufferGeometry();
     const vertices = model.attributes.POSITION.value;
-    console.log(model.attributes.POSITION.value);
+    // console.log(model.attributes.POSITION.value);
    // console.log(model.attributes.POSITION);
-    console.log(vertices);
+   //  console.log(vertices);
     // itemSize = 3 because there are 3 values (components) per vertex
     this.geometry.setAttribute( 'position', new THREE.BufferAttribute(vertices,3) );
+
+    let colors = model.attributes.COLOR_0;
+    let classification = model.attributes.classification;
+    let alphas = model.attributes.intensity;
+    // console.log("classification vales - ")
+    // console.log(classification)
+    // console.log(classification.value)
+    // console.log(colors)
+    // console.log(colors.value)
+
+    let chosen_colors = [
+      [50, 60, 70],
+      [50, 255, 50],
+      [80, 255, 80],
+      [1, 255, 2],
+      [255, 4, 3],
+      [255, 5, 255],
+      [200, 6, 200],
+      [255, 255, 7],
+    ]
+
+    // let colors_put = classification.value.map( (i) => [chosen_colors[i][0], chosen_colors[i][1], chosen_colors[i][2]] )
+    // let colors_put = classification.value.map( function (i) {console.log(i); return chosen_colors[i];})
+
+    for(let i = 0, len = classification.length; i < len; i=i+1) {
+      colors[(i*4)] = chosen_colors[classification[i]][0];
+      colors[(i*4) + 1] = chosen_colors[classification[i]][1];
+      colors[(i*4) + 2] = chosen_colors[classification[i]][2];
+    }
+    console.log("comparing colors")
+    // console.log(colors_put)
+    // console.log(colors_put)
+    console.log(colors)
+    console.log(colors.value)
+
+    this.geometry.setAttribute( 'color', new THREE.BufferAttribute( colors.value, 3 ) );
+    this.geometry.setAttribute( 'classification', new THREE.BufferAttribute(classification.value, 1 ) );
+    // this.geometry.setAttribute( 'alpha', new THREE.BufferAttribute( alphas, 1 ) );
+    // console.log(this.geometry)
+
     // Create material.
-    this.material = new THREE.PointsMaterial({size:1, color: "#88FFFF"});
+    this.material = new THREE.PointsMaterial({size:0.7, color: "#88F000", vertexColors:true});
 
     // Create mesh.
     this.mesh = new THREE.Points(this.geometry, this.material);
 
     // Set mesh on entity.
     this.el.setObject3D('mesh', this.mesh);
+    // console.log("Pointcloud appears 2")
 
+    // USELESS CODE -------------------------------------------------
   //   //this.el.setObject3D('tileset', model);
   //   let positions = model.attributes.POSITION;
   //   let colors = model.attributes.COLOR_0;
@@ -70,11 +160,15 @@ AFRAME.registerComponent('loader-las', {
   //   var geometry = new THREE.InstancedBufferGeometry();
   //   geometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
   //   geometry.setAttribute( 'color', new THREE.BufferAttribute( colors, 4 ) );
-  //   geometry.setAttribute( 'classification', new THREE.BufferAttribute(classification, 1 ) );
-  //   //geometry.setAttribute( 'size', new THREE.BufferAttribute( sizes, 1 ) );
-  //   geometry.setAttribute( 'alpha', new THREE.BufferAttribute( alphas, 1 ) );
+    // geometry.setAttribute( 'classification', new THREE.BufferAttribute(classification, 1 ) );
+    // geometry.setAttribute( 'size', new THREE.BufferAttribute( sizes, 1 ) );
+    // geometry.setAttribute( 'alpha', new THREE.BufferAttribute( alphas, 1 ) );
+
+
   //   // const sumDisp = new Float32Array(sumDisplacement);
   //   // geometry.setAttribute('offset', new THREE.InstancedBufferAttribute(sumDisp, 3 ));
+
+
   //   const material = new THREE.PointsMaterial( { color: 0xFF8888 , size: 10 } );
   //   var System = new THREE.Points( geometry, material);
   //   console.log(System);
@@ -116,10 +210,10 @@ AFRAME.registerComponent('loader-las', {
   //   if (this.data.showStats) {
   //     this.stats = this._initStats();
   //   }
-  //   if (THREE.Cache.enabled) {
-  //     console.warn('3D Tiles loader cannot work with THREE.Cache, disabling.');
-  //     THREE.Cache.enabled = false;
-  //   }
+    if (THREE.Cache.enabled) {
+      console.warn('3D Tiles loader cannot work with THREE.Cache, disabling.');
+      THREE.Cache.enabled = false;
+    }
   //   await this._nextFrame();
   //   //this.runtime = runtime;
   //   //this.runtime.setElevationRange(this.data.pointcloudElevationRange.map(n => Number(n)));
@@ -206,7 +300,8 @@ AFRAME.registerComponent('loader-las', {
   },
   _initCloud: async function () {
     const pointCloudColoring = this._resolvePointcloudColoring(this.data.pointcloudColoring);
-    console.log("initializing pointcloud"); 
+    console.log("initializing pointcloud");
+    console.log(this.data.pointcloudColoring)
     return LoaderLAS.load({
       url: this.data.url,
       renderer: this.el.sceneEl.renderer,
@@ -237,6 +332,9 @@ AFRAME.registerComponent('loader-las', {
 //     });
 //   }
 });
+
+
+
 
 // /**
 //  * 3D Tiles component for A-Frame.
