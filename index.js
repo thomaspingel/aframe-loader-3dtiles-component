@@ -69,22 +69,7 @@ AFRAME.registerComponent('loader-las', {
     // const sph = document.getElementById("sph");
     // console.log(sph);
 
-    let downloadcsv = function()
-    {
-      let csv = arrayToCsv([
-        [1, '2', '"3"'],
-        [true, null, undefined],
-      ]);
-      downloadBlob(csv, 'export.csv', 'text/csv;charset=utf-8;')
-      console.log("download")
-    }
 
-    var button = document.querySelector(this.data.downid);
-    console.log("button found 2 -")
-    console.log(button)
-    button.style.cursor = "pointer";
-
-    button.addEventListener('click', downloadcsv);
 
     const model = await this._initCloud();
      // console.log(model);
@@ -142,9 +127,38 @@ AFRAME.registerComponent('loader-las', {
 
     // Create mesh.
     this.mesh = new THREE.Points(this.geometry, this.material);
-
+    let mesh_var = this;
     // Set mesh on entity.
     this.el.setObject3D('mesh', this.mesh);
+
+    let downloadcsv = function()
+    {
+      // console.log(mesh_var.mesh)
+      // console.log(mesh_var.el)
+      let pos_arr = mesh_var.geometry.getAttribute('position').array
+      // let col_arr = mesh_var.geometry.getAttribute('color').array
+      let classification = mesh_var.geometry.getAttribute('classification').array
+
+      let csv = []
+      for (let i = 0; i < pos_arr.length; i = i + 3) {
+        csv.push([pos_arr[i], pos_arr[i+1], pos_arr[i+2], classification[i/3]])
+      }
+      // console.log(pos_arr.length)
+      // console.log(csv)
+      // console.log("download")
+      // console.log(csv)
+      csv = arrayToCsv(csv)
+      // console.log(csv)
+      downloadBlob(csv, 'export.csv', 'text/csv;charset=utf-8;')
+
+    }
+
+    var button = document.querySelector(this.data.downid);
+    // console.log("button found 2 -")
+    console.log(button)
+    button.style.cursor = "pointer";
+    button.addEventListener('click', downloadcsv);
+
     // console.log("Pointcloud appears 2")
 
     // USELESS CODE -------------------------------------------------
@@ -214,6 +228,9 @@ AFRAME.registerComponent('loader-las', {
       console.warn('3D Tiles loader cannot work with THREE.Cache, disabling.');
       THREE.Cache.enabled = false;
     }
+
+
+
   //   await this._nextFrame();
   //   //this.runtime = runtime;
   //   //this.runtime.setElevationRange(this.data.pointcloudElevationRange.map(n => Number(n)));
