@@ -36,15 +36,32 @@ AFRAME.registerComponent('lasloader', {
 
      const model = await this._initCloud();
      console.log(model);
-     this.el.sceneEl.addEventListener('loaded', function(){
-      console.log("loaded");
-      console.log(this.classification);
-    });
+
     // Create geometry.
+    this.center = [
+      (model.header.boundingBox[0][0]+model.header.boundingBox[1][0])/2,
+      (model.header.boundingBox[0][1]+model.header.boundingBox[1][1])/2,
+      (model.header.boundingBox[0][2]+model.header.boundingBox[1][2])/2,
+    ]
+    console.log(this.center);
+
     this.geometry = new BufferGeometry();
     this.positions = model.attributes.POSITION.value;
     this.colors = model.attributes.COLOR_0.value;
     this.classification = model.attributes.classification.value;
+
+    // translate the entire pointcloud so that the center of it is at 0,0,-100 (good for viewing)
+    for(let i =0; i< this.positions.length;i++){
+      if(i%3==0){
+        this.positions[i]-=this.center[0];
+      }else if(i%3==1){
+        this.positions[i]-=this.center[1];
+      }else{
+        this.positions[i]-=this.center[2]+2;
+      }
+    }
+
+
     //this.el.setAttribute('loaderlas','classification',this.classification);
     //this.lasloader.setAttribute('classification', model.attributes.classification.value);
     //console.log(this.colors);
@@ -101,20 +118,29 @@ AFRAME.registerComponent('lasloader', {
 
     // Set mesh on entity.
     this.el.setObject3D('mesh', this.mesh);
-    
+    this.el.sceneEl.addEventListener('loaded', function(){
+      console.log("loaded");
+      console.log(this.classification);
+    });
    },
-
-  update: function (oldData) {
+  classify: function(indices, clns){
+    for(let i=0; i<indices.length;i++){
+      this.classification[indices[i]]=clns[i];
+    }
+    this.update();
+  },
+  update: async function (oldData) {
+    await new Promise(r => setTimeout(r, 18000));
     console.log("update");
-    console.log(oldData);
+    console.log(this.classification);
     
     // Create geometry.
     this.geometry = new BufferGeometry();
 
     // let tempclass=this.classification;
-    // for(let i = 0; i < 100000; i++){
-    //   tempclass[i] =7;
-    // }
+    for(let i = 0; i < 100000; i++){
+      this.classification[i] =7;
+    }
     // this.classification = tempclass;
     //this.lasloader.setAttribute('classification', tempclass);
     // Set colors to classification based on standard color scheme
