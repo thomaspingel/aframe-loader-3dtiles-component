@@ -1,0 +1,168 @@
+<head>
+  <title>My A-Frame Scene</title>
+  <!-- <script src="https://aframe.io/releases/1.3.0/aframe.min.js%22%3E</script> -->
+  <script src="aframe.min.js"></script>
+  <script src='https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/utils/WorkerPool.js%27%3E'</script>
+  <script src='https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/loaders/KTX2Loader.js%27%3E'</script>
+  <script src="./dist/aframe-loader-3dtiles-component.js?v25"></script>
+
+  <!-- define camera logger component -->
+  <script>
+    AFRAME.registerComponent('camera-logger', {
+
+      schema: {
+        timestamp: {type: 'int'},
+        seconds: {type: 'int'} // default 0
+      },
+
+      log : function () {
+        var cameraEl = this.el.sceneEl.camera.el;
+        var rotation = cameraEl.getAttribute('rotation');
+        var worldPos = new THREE.Vector3();
+        worldPos.setFromMatrixPosition(cameraEl.object3D.matrixWorld);
+        console.log("Time: " + this.data.seconds
+                + "; Camera Position: (" + worldPos.x.toFixed(2) + ", " + worldPos.y.toFixed(2) + ", " + worldPos.z.toFixed(2)
+                + "); Camera Rotation: (" + rotation.x.toFixed(2) + ", " + rotation.y.toFixed(2) + ", " + rotation.z.toFixed(2) + ")");
+      },
+
+      play: function () {
+        this.data.timestamp = Date.now();
+        this.log();
+      },
+
+      tick: function () {
+        if (Date.now() - this.data.timestamp > 1000) {
+          this.data.timestamp += 1000;
+          this.data.seconds += 1;
+          this.log();
+        }
+      },
+    });
+  </script>
+
+
+  <script type="text/javascript">
+    // https://github.com/stemkoski/A-Frame-Examples/blob/master/screen-controls-buttons-look.html
+    // function haltEvent(event)
+    // {
+    //   event.preventDefault && event.preventDefault();
+    //   event.stopPropagation && event.stopPropagation();
+    //   event.cancelBubble = true;
+    //   event.returnValue = false;
+    //   return false;
+    // }
+    //
+    // function addButtonEventListeners( buttonElementID, startFunction, endFunction )
+    // {
+    //   let element = document.getElementById( buttonElementID );
+    //   element.addEventListener('touchstart', startFunction);
+    //   element.addEventListener('mousedown',  startFunction);
+    //   element.addEventListener('touchend',   endFunction);
+    //   element.addEventListener('mouseup',    endFunction);
+    // }
+    //
+    // function associateMovementControls( buttonElementID, component, keyName )
+    // {
+    //   addButtonEventListeners(buttonElementID,
+    //           function(event)
+    //           {
+    //             component.registerKeyDown( keyName );
+    //             return haltEvent(event);
+    //           },
+    //           function(event)
+    //           {
+    //             component.registerKeyUp( keyName );
+    //             return haltEvent(event);
+    //           }
+    //   );
+    // }
+
+
+    // let downloadcsv = function ()
+    // {
+    //   console.log("download")
+    // }
+    // AFRAME.registerComponent('download-button',{
+    //   init: function () {
+    //     var button = document.querySelector('#download-buttonid');
+    //     button.style.cursor = "pointer";
+    //     button.addEventListener('click', downloadcsv);
+    //   },
+    //   update: function () {
+    //     // var button = document.querySelector('#download-buttonid');
+    //     // button.addEventListener('click', downloadcsv);
+    //   }
+    // });
+  </script>
+
+
+</head>
+
+<body>
+
+
+
+<a-scene environment="preset: default"
+         background="color: blue"
+         keyboard-shortcuts="enterVR: false;"
+         vr-mode-ui="enabled: false;"
+         download-button>
+
+
+
+<!--  <a-camera id="camera" camera-logger position="553852 4118299 595" rotation="-90 -153 0" ></a-camera>-->
+  <a-camera id="camera" position="553837 4118282 624" rotation="-36 -256 0" >
+    <a-entity id="download-buttonid" geometry="primitive: box" material="color: red" position="-3 -1 -3"></a-entity>
+
+    <a-entity id="loadurl-buttonid" geometry="primitive: box" material="color: purple" position="3 -1 -3"></a-entity>
+
+    <a-entity position="0 1.5 -2" id="urltext" textarea="backgroundColor:white; color:black; cols:10; rows:1;value:5;"></a-entity>
+<!--    <a-input postion="0 2 -2"></a-input>-->
+    <a-button onclick="LoadURL()">Load URL!</a-button>
+  </a-camera>
+
+  <a-entity cursor="rayOrigin:mouse"></a-entity>
+
+  <a-entity
+          id="freeman-tiles"
+          position="0 0 0"
+          rotation="0 0 0"
+          scale="1 1 1"
+          loader-las="
+            url: https://rawhitten.github.io/tree.laz;
+            downid: #download-buttonid;
+            maximumSSE: 48;
+            cameraEl: #camera;
+            pointcloudColoring: classification; 
+            ">
+  </a-entity>
+</a-scene>
+
+</body>
+
+<script>
+  var sceneEl = document.querySelector('a-scene');
+
+  function LoadURL() {
+    const textboxurl = document.getElementById("urltext");
+    console.log(textboxurl.components.textarea.textarea.value)
+    // document.getElementById("resultado").innerHTML = textboxurl.value;
+    const pointcloud = document.getElementById("freeman-tiles");
+    console.log(pointcloud)
+    console.log(pointcloud.getAttribute("loader-las"))
+    console.log(pointcloud.getAttribute("loader-las").url)
+    pointcloud.parentNode.removeChild(pointcloud);
+    pointcloud.setAttribute('loader-las', {url: 'https://rawhitten.github.io/'});
+    // sceneEl.appendChild(pointcloud);
+  }
+
+  const loadbttn = document.getElementById("loadurl-buttonid");
+  loadbttn.addEventListener("click", LoadURL)
+
+
+  function appendObject(id, file, scale, position, rotation, scale) {
+
+
+
+  }
+</script>
