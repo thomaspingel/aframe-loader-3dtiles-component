@@ -6,6 +6,35 @@ if (typeof AFRAME === 'undefined') {
   throw new Error('Component attempted to register before AFRAME was available.');
 }
 
+/** Convert a 2D array into a CSV string
+ */
+function arrayToCsv(data){
+  return data.map(row =>
+      row
+          .map(String)  // convert every value to String
+          .map(v => v.replaceAll('"', '""'))  // escape double colons
+          .map(v => `"${v}"`)  // quote it
+          .join(',')  // comma-separated
+  ).join('\r\n');  // rows starting on new lines
+}
+
+/** Download contents as a file
+ * Source: https://stackoverflow.com/questions/14964035/how-to-export-javascript-array-info-to-csv-on-client-side
+ */
+function downloadBlob(content, filename, contentType) {
+  // Create a blob
+  var blob = new Blob([content], { type: contentType });
+  var url = URL.createObjectURL(blob);
+
+  // Create a link to download it
+  var pom = document.createElement('a');
+  pom.href = url;
+  pom.setAttribute('download', filename);
+  pom.click();
+}
+
+
+
 const POINT_CLOUD_COLORING = {
   white: PointCloudColoring.White,
   intensity: PointCloudColoring.Intensity,
@@ -16,6 +45,7 @@ const POINT_CLOUD_COLORING = {
 AFRAME.registerComponent('lasloader', {
   schema: {
     url: { type: 'string' },
+    downid: { type: 'string' },
     cameraEl: { type: 'selector' },
     maximumSSE: { type: 'int', default: 16 },
     maximumMem: { type: 'int', default: 32 },
@@ -28,50 +58,12 @@ AFRAME.registerComponent('lasloader', {
     positions: {type: 'array', default: []}
   },
   init: async function () {
-     console.log("aframe init");
 
-     const model = await this._initCloud();
-     console.log(model);
-
-    // Create geometry.
-
-    // calculate center coordinate of bounding box
-    // in order to translate all points to origin
-    this.center = [
-      (model.header.boundingBox[0][0]+model.header.boundingBox[1][0])/2,
-      (model.header.boundingBox[0][1]+model.header.boundingBox[1][1])/2,
-      (model.header.boundingBox[0][2]+model.header.boundingBox[1][2])/2,
-    ]
-    console.log(this.center);
-
-    this.geometry = new BufferGeometry();
-    this.positions = model.attributes.POSITION.value;
-    this.colors = model.attributes.COLOR_0.value;
-    this.classification = model.attributes.classification.value;
-
-    // translate the entire pointcloud so that the center of it is at 0,0,100 (good for viewing)
-    for(let i =0; i< this.positions.length;i++){
-      if(i%3==0){
-        this.positions[i]-=this.center[0];
-      }else if(i%3==1){
-        this.positions[i]-=this.center[1];
-      }else{
-        this.positions[i]-=this.center[2]+2;
-      }
-    }
-
-
-    //this.el.setAttribute('loaderlas','classification',this.classification);
-    //this.lasloader.setAttribute('classification', model.attributes.classification.value);
-    //console.log(this.colors);
-    //console.log(this.data.classification);
-    // console.log((this.classification)[0]);
-    // console.log(this.classification[0]);
     /**
      * Standard Classification Colors
      * source: https://www.researchgate.net/figure/Colors-used-to-represent-LAS-classification-codes-in-PDQ_fig2_283413311
      */
-    this.classificationColors = [
+     this.classificationColors = [
       [100,100,100], //0: Created, never classified
       [200,200,200], //1: Unclassified
       [128, 71, 10], //2: Ground
@@ -88,16 +80,47 @@ AFRAME.registerComponent('lasloader', {
       [237, 143, 2], //13+: Reserved
     ]
 
-      // Set colors to classification based on standard color scheme
-      for(let i = 0; i < this.classification.length; i++){
-        if(this.classification[i] >13){
-          console.log(i+" "+ this.classification[i]);
-        } else {
-          this.colors[i*4] = this.classificationColors[(this.classification)[i]][0];
-          this.colors[(i*4) + 1] = this.classificationColors[this.classification[i]][1];
-          this.colors[(i*4) + 2] = this.classificationColors[this.classification[i]][2];
-        }
+    const model = await this._initCloud();
+    console.log(model);
+
+    // Create geometry.
+
+    // calculate center coordinate of bounding box
+    // in order to translate all points to origin
+    this.center = [
+      (model.header.boundingBox[0][0]+model.header.boundingBox[1][0])/2,
+      (model.header.boundingBox[0][1]+model.header.boundingBox[1][1])/2,
+      (model.header.boundingBox[0][2]+model.header.boundingBox[1][2])/2,
+    ]
+    console.log(this.center);
+
+    this.geometry = new BufferGeometry();
+
+    this.positions = model.attributes.POSITION.value;
+    this.colors = model.attributes.COLOR_0.value;
+    this.classification = model.attributes.classification.value;
+
+    // translate the entire pointcloud so that the center of it is at 0,0,100 (good for viewing)
+    for(let i =0; i< this.positions.length;i++){
+      if(i%3==0){
+        this.positions[i]-=this.center[0];
+      }else if(i%3==1){
+        this.positions[i]-=this.center[1];
+      }else{
+        this.positions[i]-=this.center[2]+2;
       }
+    }
+
+    // Set colors to classification based on standard color scheme
+    for(let i = 0; i < this.classification.length; i++){
+      if(this.classification[i] >13){
+        console.log(i+" "+ this.classification[i]);
+      } else {
+        this.colors[i*4] = this.classificationColors[(this.classification)[i]][0];
+        this.colors[(i*4) + 1] = this.classificationColors[this.classification[i]][1];
+        this.colors[(i*4) + 2] = this.classificationColors[this.classification[i]][2];
+      }
+    }
 
     // itemSize = 3 because there are 3 values (components) per vertex
     this.geometry.setAttribute( 'position', new THREE.BufferAttribute(this.positions,3) );
@@ -109,13 +132,41 @@ AFRAME.registerComponent('lasloader', {
 
     // Create mesh.
     this.mesh = new THREE.Points(this.geometry, this.material);
-
+    let mesh_var = this;
     // Set mesh on entity.
     this.el.setObject3D('mesh', this.mesh);
     this.el.sceneEl.addEventListener('loaded', function(){
       console.log("loaded");
       console.log(this.classification);
     });
+
+    let downloadcsv = function()
+    {
+      // console.log(mesh_var.mesh)
+      // console.log(mesh_var.el)
+      let pos_arr = mesh_var.geometry.getAttribute('position').array
+      // let col_arr = mesh_var.geometry.getAttribute('color').array
+      let classification = mesh_var.geometry.getAttribute('classification').array
+
+      let csv = []
+      for (let i = 0; i < pos_arr.length; i = i + 3) {
+        csv.push([pos_arr[i], pos_arr[i+1], pos_arr[i+2], classification[i/3]])
+      }
+      csv = arrayToCsv(csv)
+      downloadBlob(csv, 'export.csv', 'text/csv;charset=utf-8;')
+
+    }
+
+    var button = document.querySelector(this.data.downid);
+    // console.log("button found 2 -")
+    console.log(button)
+    button.style.cursor = "pointer";
+    button.addEventListener('click', downloadcsv);
+
+    if (THREE.Cache.enabled) {
+      console.warn('3D Tiles loader cannot work with THREE.Cache, disabling.');
+      THREE.Cache.enabled = false;
+    }
 
     // Sleep 18sec? idk if this is necessary anymore
     await new Promise(r => setTimeout(r, 18000));
@@ -185,7 +236,8 @@ AFRAME.registerComponent('lasloader', {
   },
   _initCloud: async function () {
     const pointCloudColoring = this._resolvePointcloudColoring(this.data.pointcloudColoring);
-    console.log("initializing pointcloud"); 
+    console.log("initializing pointcloud");
+    console.log(this.data.pointcloudColoring)
     return LoaderLAS.load({
       url: this.data.url,
       renderer: this.el.sceneEl.renderer,
@@ -195,6 +247,9 @@ AFRAME.registerComponent('lasloader', {
     });
   }
 });
+
+
+
 
 // /**
 //  * 3D Tiles component for A-Frame.
