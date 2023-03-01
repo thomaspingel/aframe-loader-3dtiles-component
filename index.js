@@ -1,5 +1,5 @@
 import { Loader3DTiles, LoaderLAS, PointCloudColoring } from '../three-loader-3dtiles/dist/three-loader-3dtiles.esm.js';
-import { Vector3, RawShaderMaterial, BufferGeometry } from 'three';
+import { Vector3,  BufferGeometry } from 'three';
 import './textarea';
 
 if (typeof AFRAME === 'undefined') {
@@ -13,7 +13,7 @@ const POINT_CLOUD_COLORING = {
   elevation: PointCloudColoring.Elevation,
   rgb: PointCloudColoring.RGB
 };
-AFRAME.registerComponent('loader-las', {
+AFRAME.registerComponent('lasloader', {
   schema: {
     url: { type: 'string' },
     cameraEl: { type: 'selector' },
@@ -22,179 +22,158 @@ AFRAME.registerComponent('loader-las', {
     distanceScale: { type: 'number', default: 1.0 },
     pointcloudColoring: { type: 'string', default: 'white' },
     pointcloudElevationRange: { type: 'array', default: ['0', '400'] },
-    wireframe: { type: 'boolean', default: false },
-    showStats: { type: 'boolean', default: false }
+    classificationColors: {type: 'array', default: []},
+    classification: {type: 'array', default: []},
+    colors: {type: 'array', default: []},
+    positions: {type: 'array', default: []}
   },
   init: async function () {
-    // this.renderer = new THREE.WebGLRenderer({canvas: this.el.canvas});
-    // const size = new THREE.Vector2();
-    // this.el.renderer.getSize(size);
-    // this.renderer.setSize(size.x, size.y)
      console.log("aframe init");
-    // this.camera = this.data.cameraEl?.object3D.children[0] ?? document.querySelector('a-scene').camera;
-    // if (!this.camera) {
-    //   throw new Error('3D Tiles: Please add an active camera or specify the target camera via the cameraEl property');
-    // }
-    // console.log(this);
-    // const sph = document.getElementById("sph");
-    // console.log(sph);
+
      const model = await this._initCloud();
      console.log(model);
 
     // Create geometry.
+
+    // calculate center coordinate of bounding box
+    // in order to translate all points to origin
+    this.center = [
+      (model.header.boundingBox[0][0]+model.header.boundingBox[1][0])/2,
+      (model.header.boundingBox[0][1]+model.header.boundingBox[1][1])/2,
+      (model.header.boundingBox[0][2]+model.header.boundingBox[1][2])/2,
+    ]
+    console.log(this.center);
+
     this.geometry = new BufferGeometry();
-    const vertices = model.attributes.POSITION.value;
-    console.log(model.attributes.POSITION.value);
-   // console.log(model.attributes.POSITION);
-    console.log(vertices);
+    this.positions = model.attributes.POSITION.value;
+    this.colors = model.attributes.COLOR_0.value;
+    this.classification = model.attributes.classification.value;
+
+    // translate the entire pointcloud so that the center of it is at 0,0,100 (good for viewing)
+    for(let i =0; i< this.positions.length;i++){
+      if(i%3==0){
+        this.positions[i]-=this.center[0];
+      }else if(i%3==1){
+        this.positions[i]-=this.center[1];
+      }else{
+        this.positions[i]-=this.center[2]+2;
+      }
+    }
+
+
+    //this.el.setAttribute('loaderlas','classification',this.classification);
+    //this.lasloader.setAttribute('classification', model.attributes.classification.value);
+    //console.log(this.colors);
+    //console.log(this.data.classification);
+    // console.log((this.classification)[0]);
+    // console.log(this.classification[0]);
+    /**
+     * Standard Classification Colors
+     * source: https://www.researchgate.net/figure/Colors-used-to-represent-LAS-classification-codes-in-PDQ_fig2_283413311
+     */
+    this.classificationColors = [
+      [100,100,100], //0: Created, never classified
+      [200,200,200], //1: Unclassified
+      [128, 71, 10], //2: Ground
+      [22, 117, 24], //3: Low vegetation
+      [33, 166, 36], //4: Medium vegetation
+      [50, 237, 54], //5: High vegetation
+      [58, 158,189], //6: Building
+      [255,  0,  0], //7: Low point (noise)
+      [255,255,  0], //8: Model key-point (mass point)
+      [  0,  0,255], //9: Water
+      [237, 143, 2], //10: Reserved
+      [237, 143, 2], //11: Reserved
+      [255,  0,255], //12: Overlap points
+      [237, 143, 2], //13+: Reserved
+    ]
+
+      // Set colors to classification based on standard color scheme
+      for(let i = 0; i < this.classification.length; i++){
+        if(this.classification[i] >13){
+          console.log(i+" "+ this.classification[i]);
+        } else {
+          this.colors[i*4] = this.classificationColors[(this.classification)[i]][0];
+          this.colors[(i*4) + 1] = this.classificationColors[this.classification[i]][1];
+          this.colors[(i*4) + 2] = this.classificationColors[this.classification[i]][2];
+        }
+      }
+
     // itemSize = 3 because there are 3 values (components) per vertex
-    this.geometry.setAttribute( 'position', new THREE.BufferAttribute(vertices,3) );
+    this.geometry.setAttribute( 'position', new THREE.BufferAttribute(this.positions,3) );
+    this.geometry.setAttribute( 'color', new THREE.BufferAttribute(this.colors,4) );
+    this.geometry.attributes.color.normalized = true;
+    this.geometry.setAttribute( 'classification', new THREE.BufferAttribute(this.classification,1) );
     // Create material.
-    this.material = new THREE.PointsMaterial({size:1, color: "#88FFFF"});
+    this.material = new THREE.PointsMaterial({size:1, vertexColors: true});
 
     // Create mesh.
     this.mesh = new THREE.Points(this.geometry, this.material);
 
     // Set mesh on entity.
     this.el.setObject3D('mesh', this.mesh);
+    this.el.sceneEl.addEventListener('loaded', function(){
+      console.log("loaded");
+      console.log(this.classification);
+    });
 
-  //   //this.el.setObject3D('tileset', model);
-  //   let positions = model.attributes.POSITION;
-  //   let colors = model.attributes.COLOR_0;
-  //   let classification = model.attributes.classification;
-  //   let alphas = model.attributes.intensity;
-  //   console.log(positions);
-  //   /**
-  //    * geometry code from https://jsfiddle.net/h9fnx3sy/
-  //    */
-  //   var geometry = new THREE.InstancedBufferGeometry();
-  //   geometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
-  //   geometry.setAttribute( 'color', new THREE.BufferAttribute( colors, 4 ) );
-  //   geometry.setAttribute( 'classification', new THREE.BufferAttribute(classification, 1 ) );
-  //   //geometry.setAttribute( 'size', new THREE.BufferAttribute( sizes, 1 ) );
-  //   geometry.setAttribute( 'alpha', new THREE.BufferAttribute( alphas, 1 ) );
-  //   // const sumDisp = new Float32Array(sumDisplacement);
-  //   // geometry.setAttribute('offset', new THREE.InstancedBufferAttribute(sumDisp, 3 ));
-  //   const material = new THREE.PointsMaterial( { color: 0xFF8888 , size: 10 } );
-  //   var System = new THREE.Points( geometry, material);
-  //   console.log(System);
-  //   //this.el.setObject3D('mesh', System);
-
-  //   console.log(this.el.object3D);
-  //   this.originalCamera = this.camera;
-    
-
-  //   this.el.sceneEl.addEventListener('camera-set-active', (e) => {
-  //     // TODO: For some reason after closing the inspector this event is fired with an empty camera,
-  //     // so revert to the original camera used.
-  //     //
-  //     // TODO: Does not provide the right Inspector perspective camera
-  //     this.camera = e.detail.cameraEl.object3D.children[0] ?? this.originalCamera;
-  //   });
-  //   this.el.sceneEl.addEventListener('enter-vr', (e) => {
-  //     this.originalCamera = this.camera;
-  //     try {
-  //       this.camera = this.el.sceneEl.renderer.xr.getCamera(this.camera);
-
-  //       // FOV Code from https://github.com/mrdoob/three.js/issues/21869
-  //       this.el.sceneEl.renderer.xr.getSession().requestAnimationFrame((time, frame) => {
-  //         const ref = this.el.sceneEl.renderer.xr.getReferenceSpace();
-  //         const pose = frame.getViewerPose(ref);
-  //         if (pose) {
-  //           const fovi = pose.views[0].projectionMatrix[5];
-  //           this.camera.fov = Math.atan2(1, fovi) * 2 * 180 / Math.PI;
-  //         }
-  //       });
-  //     } catch (e) {
-  //       console.warn('Could not get VR camera');
-  //     }
-  //   });
-  //   this.el.sceneEl.addEventListener('exit-vr', (e) => {
-  //     this.camera = this.originalCamera;
-  //   });
-
-  //   if (this.data.showStats) {
-  //     this.stats = this._initStats();
-  //   }
-  //   if (THREE.Cache.enabled) {
-  //     console.warn('3D Tiles loader cannot work with THREE.Cache, disabling.');
-  //     THREE.Cache.enabled = false;
-  //   }
-  //   await this._nextFrame();
-  //   //this.runtime = runtime;
-  //   //this.runtime.setElevationRange(this.data.pointcloudElevationRange.map(n => Number(n)));
+    // Sleep 18sec? idk if this is necessary anymore
+    await new Promise(r => setTimeout(r, 18000));
    },
-  // update: async function (oldData) {
-  //   if (oldData.url !== this.data.url) {
-  //     if (this.runtime) {
-  //       this.runtime.dispose();
-  //       this.runtime = null;
-  //     }
-  //     const model = await this._initCloud();
-  //     let positions = model.attributes.POSITION;
-  //     //let positions = new Float32Array([0,0,0,0,1,0,1,0,1]);
-  //     let colors = model.attributes.COLOR_0;
-  //     let classification = model.attributes.classification;
-  //     let alphas = model.attributes.intensity;
-  //     console.log(positions);
-  //     /**
-  //      * geometry code from https://jsfiddle.net/h9fnx3sy/
-  //      */
-  //     var geometry = new THREE.InstancedBufferGeometry();
-  //     geometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
-  //     geometry.setAttribute( 'color', new THREE.BufferAttribute( colors, 4 ) );
-  //     geometry.setAttribute( 'classification', new THREE.BufferAttribute(classification, 1 ) );
-  //     //geometry.setAttribute( 'size', new THREE.BufferAttribute( sizes, 1 ) );
-  //     geometry.setAttribute( 'alpha', new THREE.BufferAttribute( alphas, 1 ) );
-  //     // const sumDisp = new Float32Array(sumDisplacement);
-  //     // geometry.setAttribute('offset', new THREE.InstancedBufferAttribute(sumDisp, 3 ));
-  //     const material = new THREE.PointsMaterial( { color: 0xFF8888, size: 10 } );
-  //     var System = new THREE.Points( geometry, material);
-  //     console.log(System);
-  //     this.el.setObject3D('pointcloud', System);
-  //     //this.el.setObject3D('pointcloud', model);
-  //     await this._nextFrame();
-      //this.runtime = runtime;
-  //   } else if (this.runtime) {
-  //     this.runtime.setPointCloudColoring(this._resolvePointcloudColoring(this.data.pointCloudColoring));
-  //     // this.runtime.setWireframe(this.data.wireframe);
-  //     // this.runtime.setViewDistanceScale(this.data.distanceScale);
-  //     // this.runtime.setElevationRange(this.data.pointcloudElevationRange.map(n => Number(n)));
-  //   }
 
-  //   if (this.data.showStats && !this.stats) {
-  //     this.stats = this._initStats();
-  //   }
-  //   if (!this.data.showStats && this.stats) {
-  //     this.el.sceneEl.removeChild(this.stats);
-  //     this.stats = null;
-  //   }
-  // },
-  // tick: function (t, dt) {
-  //   //console.log(this.camera.getAttribute('position'));
-  //   if (this.runtime) {
-  //     this.runtime.update(dt, this.el.sceneEl.renderer, this.camera);
-  //     if (this.stats) {
-  //       const worldPos = new Vector3();
-  //       this.camera.getWorldPosition(worldPos);
-  //       const stats = this.runtime.getStats();
-  //       this.stats.setAttribute(
-  //         'textarea',
-  //         'text',
-  //         Object.values(stats.stats).map(s => `${s.name}: ${s.count}`).join('\n')
-  //       );
-  //       const newPos = new Vector3();
-  //       newPos.copy(worldPos);
-  //       newPos.z -= 2;
-  //       this.stats.setAttribute('position', newPos);
-  //     }
-  //   }
-  // },
-  // remove: function () {
-  //   if (this.runtime) {
-  //     this.runtime.dispose();
-  //   }
-  // },
+  /**
+   * Changes classification of specified points
+   * @param {*} indices array of point indices to change
+   * @param {*} clns equal-length array of classification values to change above points to, in that order
+   */ 
+  classify: function(indices, clns){
+    if(indices.length != clns.length){ //error-checking
+      console.log("ERROR: tried to classify point array of length %d with values array of length %d", indices.length, clns.length);
+    } else {
+      for(let i=0; i<indices.length;i++){
+        this.classification[indices[i]]=clns[i];
+      }
+      this.update();
+    }
+  },
+  update: async function (oldData) {
+    
+    console.log("update");
+    console.log(this.classification);
+    
+    // Create geometry.
+    this.geometry = new BufferGeometry();
+
+    // Set colors to classification based on standard color scheme defined in this.classificationColors
+    for(let i = 0; i < this.classification.length; i++){
+      if(this.classification[i] >13){
+        console.log(i+" "+ this.classification[i]);
+      } else {
+        this.colors[i*4] = this.classificationColors[(this.classification)[i]][0];
+        this.colors[(i*4) + 1] = this.classificationColors[this.classification[i]][1];
+        this.colors[(i*4) + 2] = this.classificationColors[this.classification[i]][2];
+      }
+    }
+
+    // Create geometry to render the pointcloud
+    // itemSize = 3 because there are 3 values (components) per vertex
+    this.geometry.setAttribute( 'position', new THREE.BufferAttribute(this.positions,3) );
+    this.geometry.setAttribute( 'color', new THREE.BufferAttribute(this.colors,4) );
+
+    // Need this line because colors are UInt8Array and it defaults to expecting Float32Array
+    this.geometry.attributes.color.normalized = true;
+
+    this.geometry.setAttribute( 'classification', new THREE.BufferAttribute(this.classification,1) );
+
+    // Create material.
+    this.material = new THREE.PointsMaterial({size:1, vertexColors: true});
+
+    // Create mesh.
+    this.mesh = new THREE.Points(this.geometry, this.material);
+
+    // Set mesh on entity.
+    this.el.setObject3D('mesh', this.mesh);
+  },
   _resolvePointcloudColoring () {
     const pointCloudColoring = POINT_CLOUD_COLORING[this.data.pointcloudColoring];
     if (!pointCloudColoring) {
@@ -214,28 +193,7 @@ AFRAME.registerComponent('loader-las', {
         PointCloudColoring: pointCloudColoring
       }
     });
-  },
-//   _initStats: function () {
-//     const stats = document.createElement('a-entity');
-//     this.el.sceneEl.appendChild(stats);
-//     stats.setAttribute('position', '-0.5 0 -1');
-//     stats.setAttribute('textarea', {
-//       cols: 30,
-//       rows: 15,
-//       text: '',
-//       color: 'white',
-//       disabledBackgroundColor: '#0c1e2c',
-//       disabled: true
-//     });
-//     return stats;
-//   },
-//   _nextFrame: async function () {
-//     return new Promise((resolve, reject) => {
-//       setTimeout(() => {
-//         resolve();
-//       }, 0);
-//     });
-//   }
+  }
 });
 
 // /**
