@@ -80,7 +80,7 @@ AFRAME.registerComponent('lasloader', {
       [237, 143, 2], //13+: Reserved
     ]
 
-    const model = await this._initCloud();
+    let model = await this._initCloud();
     console.log(model);
 
     // Create geometry.
@@ -188,10 +188,47 @@ AFRAME.registerComponent('lasloader', {
     }
   },
   update: async function (oldData) {
-    
+
+
+
+    if (oldData.url !== this.data.url) {
+      if (this.runtime) {
+        this.runtime.dispose();
+        this.runtime = null;
+      }
+      let model = await this._initCloud();
+      // Create geometry.
+
+      // calculate center coordinate of bounding box
+      // in order to translate all points to origin
+      this.center = [
+        (model.header.boundingBox[0][0]+model.header.boundingBox[1][0])/2,
+        (model.header.boundingBox[0][1]+model.header.boundingBox[1][1])/2,
+        (model.header.boundingBox[0][2]+model.header.boundingBox[1][2])/2,
+      ]
+      console.log(this.center);
+
+      this.geometry = new BufferGeometry();
+
+      this.positions = model.attributes.POSITION.value;
+      this.colors = model.attributes.COLOR_0.value;
+      this.classification = model.attributes.classification.value;
+
+      // translate the entire pointcloud so that the center of it is at 0,0,100 (good for viewing)
+      for(let i =0; i< this.positions.length;i++){
+        if(i%3==0){
+          this.positions[i]-=this.center[0];
+        }else if(i%3==1){
+          this.positions[i]-=this.center[1];
+        }else{
+          this.positions[i]-=this.center[2]+2;
+        }
+      }
+    }
+
     console.log("update");
     console.log(this.classification);
-    
+
     // Create geometry.
     this.geometry = new BufferGeometry();
 
