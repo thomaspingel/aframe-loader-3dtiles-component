@@ -1,5 +1,5 @@
 import { Loader3DTiles, LoaderLAS, PointCloudColoring } from '../three-loader-3dtiles/dist/three-loader-3dtiles.esm.js';
-import { Vector3, RawShaderMaterial, BufferGeometry } from 'three';
+import { Vector3,  BufferGeometry } from 'three';
 import './textarea';
 
 if (typeof AFRAME === 'undefined') {
@@ -28,16 +28,15 @@ AFRAME.registerComponent('lasloader', {
     positions: {type: 'array', default: []}
   },
   init: async function () {
-    // this.renderer = new THREE.WebGLRenderer({canvas: this.el.canvas});
-    // const size = new THREE.Vector2();
-    // this.el.renderer.getSize(size);
-    // this.renderer.setSize(size.x, size.y)
      console.log("aframe init");
 
      const model = await this._initCloud();
      console.log(model);
 
     // Create geometry.
+
+    // calculate center coordinate of bounding box
+    // in order to translate all points to origin
     this.center = [
       (model.header.boundingBox[0][0]+model.header.boundingBox[1][0])/2,
       (model.header.boundingBox[0][1]+model.header.boundingBox[1][1])/2,
@@ -50,7 +49,7 @@ AFRAME.registerComponent('lasloader', {
     this.colors = model.attributes.COLOR_0.value;
     this.classification = model.attributes.classification.value;
 
-    // translate the entire pointcloud so that the center of it is at 0,0,-100 (good for viewing)
+    // translate the entire pointcloud so that the center of it is at 0,0,100 (good for viewing)
     for(let i =0; i< this.positions.length;i++){
       if(i%3==0){
         this.positions[i]-=this.center[0];
@@ -88,11 +87,7 @@ AFRAME.registerComponent('lasloader', {
       [255,  0,255], //12: Overlap points
       [237, 143, 2], //13+: Reserved
     ]
-    // console.log(this.classificationColors);
-    // console.log(this.classification[0]);
-    // console.log(this.classificationColors[this.classification[0]]);
-    // console.log(this.classificationColors[this.classification[0]][0]);    
-    //if(this.data.pointCloudColoring == POINT_CLOUD_COLORING.classification){
+
       // Set colors to classification based on standard color scheme
       for(let i = 0; i < this.classification.length; i++){
         if(this.classification[i] >13){
@@ -103,8 +98,7 @@ AFRAME.registerComponent('lasloader', {
           this.colors[(i*4) + 2] = this.classificationColors[this.classification[i]][2];
         }
       }
-    //}
-    //console.log(this.colors);
+
     // itemSize = 3 because there are 3 values (components) per vertex
     this.geometry.setAttribute( 'position', new THREE.BufferAttribute(this.positions,3) );
     this.geometry.setAttribute( 'color', new THREE.BufferAttribute(this.colors,4) );
@@ -122,28 +116,35 @@ AFRAME.registerComponent('lasloader', {
       console.log("loaded");
       console.log(this.classification);
     });
+
+    // Sleep 18sec? idk if this is necessary anymore
+    await new Promise(r => setTimeout(r, 18000));
    },
+
+  /**
+   * Changes classification of specified points
+   * @param {*} indices array of point indices to change
+   * @param {*} clns equal-length array of classification values to change above points to, in that order
+   */ 
   classify: function(indices, clns){
-    for(let i=0; i<indices.length;i++){
-      this.classification[indices[i]]=clns[i];
+    if(indices.length != clns.length){ //error-checking
+      console.log("ERROR: tried to classify point array of length %d with values array of length %d", indices.length, clns.length);
+    } else {
+      for(let i=0; i<indices.length;i++){
+        this.classification[indices[i]]=clns[i];
+      }
+      this.update();
     }
-    this.update();
   },
   update: async function (oldData) {
-    await new Promise(r => setTimeout(r, 18000));
+    
     console.log("update");
     console.log(this.classification);
     
     // Create geometry.
     this.geometry = new BufferGeometry();
 
-    // let tempclass=this.classification;
-    for(let i = 0; i < 100000; i++){
-      this.classification[i] =7;
-    }
-    // this.classification = tempclass;
-    //this.lasloader.setAttribute('classification', tempclass);
-    // Set colors to classification based on standard color scheme
+    // Set colors to classification based on standard color scheme defined in this.classificationColors
     for(let i = 0; i < this.classification.length; i++){
       if(this.classification[i] >13){
         console.log(i+" "+ this.classification[i]);
@@ -154,12 +155,16 @@ AFRAME.registerComponent('lasloader', {
       }
     }
 
-    //console.log(this.colors);
+    // Create geometry to render the pointcloud
     // itemSize = 3 because there are 3 values (components) per vertex
     this.geometry.setAttribute( 'position', new THREE.BufferAttribute(this.positions,3) );
     this.geometry.setAttribute( 'color', new THREE.BufferAttribute(this.colors,4) );
+
+    // Need this line because colors are UInt8Array and it defaults to expecting Float32Array
     this.geometry.attributes.color.normalized = true;
+
     this.geometry.setAttribute( 'classification', new THREE.BufferAttribute(this.classification,1) );
+
     // Create material.
     this.material = new THREE.PointsMaterial({size:1, vertexColors: true});
 
