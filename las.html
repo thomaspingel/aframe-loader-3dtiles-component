@@ -1,43 +1,121 @@
 <head>
-    <title>My A-Frame Scene</title>
-    <!-- <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script> -->
-    <script src="aframe.min.js"></script>
-    <script src='https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/utils/WorkerPool.js'></script>
-    <script src='https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/loaders/KTX2Loader.js'></script>
-    <script src=".\dist\aframe-loader-3dtiles-component.js"></script>
-    <script src="./classifier.js"></script>
-  </head>
-  <body>
-    <!--
-       550792 4119567 633 
-    -  550500 4119000 0 
-       292    567     633
-    
-    -->
-    <a-scene environment="preset: default"
-            background="color: #AAAAAA">
-        <a-camera id="camera" position="0 2 0"></a-camera>
-        <a-entity oculus-touch-controls="hand: left">
-          <a-sphere raycaster="objects:#pointcloud" trigger id="sph" position="0 0 -0.25" material="color:red" scale="0.5 0.5 0.5"></a-sphere>
-        </a-entity>
-        <a-entity oculus-touch-controls="hand: right" trigger ></a-entity>
-        <a-entity
-        id="pointcloud"
-        position="0 0 0"
-        rotation="0 0 0"
-        scale="1 1 1"
-        classifier 
-        lasloader="
-            url: https://rawhitten.github.io/pdal.southwest.09242022.laz; 
-            cameraEl: #camera;
-            pointcloudColoring: classification; 
-            "
-        >
-        </a-entity>
-    </a-scene>
-  </body>
-  <script>
-    let pc = document.querySelector("#pointcloud");
-    console.log(pc.getAttribute('lasloader', 'classification'));
+  <title>My A-Frame Scene</title>
+  <!-- <script src="https://aframe.io/releases/1.3.0/aframe.min.js%22%3E</script> -->
+  <script src="aframe.min.js"></script>
+  <script src='https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/utils/WorkerPool.js%27%3E'></script>
+  <script src='https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/loaders/KTX2Loader.js%27%3E'></script>
+  <script src="./dist/aframe-loader-3dtiles-component.js?v25"></script>
+  <script src="./classifier.js"></script>
+</head>
 
+<!-- define camera logger component -->
+  <script>
+    AFRAME.registerComponent('camera-logger', {
+
+      schema: {
+        timestamp: {type: 'int'},
+        seconds: {type: 'int'} // default 0
+      },
+
+      log : function () {
+        var cameraEl = this.el.sceneEl.camera.el;
+        var rotation = cameraEl.getAttribute('rotation');
+        var worldPos = new THREE.Vector3();
+        worldPos.setFromMatrixPosition(cameraEl.object3D.matrixWorld);
+        console.log("Time: " + this.data.seconds
+                + "; Camera Position: (" + worldPos.x.toFixed(2) + ", " + worldPos.y.toFixed(2) + ", " + worldPos.z.toFixed(2)
+                + "); Camera Rotation: (" + rotation.x.toFixed(2) + ", " + rotation.y.toFixed(2) + ", " + rotation.z.toFixed(2) + ")");
+      },
+
+      play: function () {
+        this.data.timestamp = Date.now();
+        this.log();
+      },
+
+      tick: function () {
+        if (Date.now() - this.data.timestamp > 1000) {
+          this.data.timestamp += 1000;
+          this.data.seconds += 1;
+          this.log();
+        }
+      },
+    });
   </script>
+
+  <!-- CHANGING URL -->
+<script>
+  var sceneEl = document.querySelector('a-scene');
+
+  function LoadURL() {
+    const textboxurl = document.getElementById("urltext");
+    console.log(textboxurl.components.textarea.textarea.value)
+    // document.getElementById("resultado").innerHTML = textboxurl.value;
+    const pointcloud = document.getElementById("pointcloud");
+    console.log(pointcloud)
+    console.log(pointcloud.getAttribute("lasloader"))
+    console.log(pointcloud.getAttribute("lasloader").url)
+    pointcloud.parentNode.removeChild(pointcloud);
+    pointcloud.setAttribute('lasloader', {url: 'https://rawhitten.github.io/'});
+    // sceneEl.appendChild(pointcloud);
+  }
+
+  const loadbttn = document.getElementById("loadurl-buttonid");
+  loadbttn.addEventListener("click", LoadURL)
+
+
+  function appendObject(id, file, scale, position, rotation, scale) {
+
+  }
+</script>
+
+
+
+<body>
+
+  <a-scene environment="preset: default"
+         background="color: #AAAAAA"
+         keyboard-shortcuts="enterVR: false;"
+         vr-mode-ui="enabled: false;"
+         download-button>
+
+  <!-- CAMERA -->
+  <!-- <a-camera id="camera" camera-logger position="553837 4118282 624" rotation="-36 -256 0" > -->
+  <a-camera id="camera" position="0 2 0">
+    <a-entity id="download-buttonid" geometry="primitive: box" material="color: red" position="-3 -1 -3"></a-entity>
+
+    <a-entity id="loadurl-buttonid" geometry="primitive: box" material="color: purple" position="3 -1 -3"></a-entity>
+
+    <a-entity position="0 1.5 -2" id="urltext" textarea="backgroundColor:white; color:black; cols:10; rows:1;value:5;"></a-entity>
+
+    <a-button onclick="LoadURL()">Load URL!</a-button>
+  </a-camera>
+
+  <!-- CONTROLS -->
+  <a-entity oculus-touch-controls="hand: left">
+    <a-sphere raycaster="objects:#pointcloud" trigger id="sph" position="0 0 -0.25" material="color:red" scale="0.5 0.5 0.5"></a-sphere>
+    </a-entity>
+  <a-entity oculus-touch-controls="hand: right" trigger ></a-entity>
+  <a-entity cursor="rayOrigin:mouse"></a-entity>
+
+  <!-- POINTCLOUD -->
+<a-entity
+  id="pointcloud"
+  position="0 0 0"
+  rotation="0 0 0"
+  scale="1 1 1"
+  classifier 
+  lasloader="
+    url: https://rawhitten.github.io/pdal.southwest.09242022.laz;
+    downid: #download-buttonid;
+    cameraEl: #camera;
+    pointcloudColoring: classification; 
+    "
+  >
+</a-entity>
+
+</a-scene>
+
+</body>
+
+
+
