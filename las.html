@@ -4,7 +4,7 @@
   <script src="aframe.min.js"></script>
   <script src='https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/utils/WorkerPool.js%27%3E'></script>
   <script src='https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/loaders/KTX2Loader.js%27%3E'></script>
-  <script src="./dist/aframe-loader-3dtiles-component.js?v25"></script>
+  <script src="./dist/aframe-loader-3dtiles-component.js?v27"></script>
   <script src="./classifier.js"></script>
 </head>
 
@@ -42,31 +42,7 @@
     });
   </script>
 
-  <!-- CHANGING URL -->
-<script>
-  var sceneEl = document.querySelector('a-scene');
 
-  function LoadURL() {
-    const textboxurl = document.getElementById("urltext");
-    console.log(textboxurl.components.textarea.textarea.value)
-    // document.getElementById("resultado").innerHTML = textboxurl.value;
-    const pointcloud = document.getElementById("pointcloud");
-    console.log(pointcloud)
-    console.log(pointcloud.getAttribute("lasloader"))
-    console.log(pointcloud.getAttribute("lasloader").url)
-    pointcloud.parentNode.removeChild(pointcloud);
-    pointcloud.setAttribute('lasloader', {url: 'https://rawhitten.github.io/'});
-    // sceneEl.appendChild(pointcloud);
-  }
-
-  const loadbttn = document.getElementById("loadurl-buttonid");
-  loadbttn.addEventListener("click", LoadURL)
-
-
-  function appendObject(id, file, scale, position, rotation, scale) {
-
-  }
-</script>
 
 
 
@@ -117,5 +93,27 @@
 
 </body>
 
+<!-- CHANGING URL -->
+<script>
+  var sceneEl = document.querySelector('a-scene');
+
+  function LoadURL() {
+    const textboxurl = document.getElementById("urltext");
+    console.log(textboxurl.components.textarea.textarea.value)
+    // document.getElementById("resultado").innerHTML = textboxurl.value;
+    const pointcloud = document.getElementById("pointcloud");
+    console.log(pointcloud)
+    console.log(pointcloud.getAttribute("lasloader"))
+    // pointcloud.parentNode.removeChild(pointcloud);
+    pointcloud.setAttribute('lasloader', {url: 'https://rawhitten.github.io/tree.laz'});
+    // sceneEl.appendChild(pointcloud);
+  }
+
+  const loadbttn = document.getElementById("loadurl-buttonid");
+  loadbttn.addEventListener("click", LoadURL)
 
 
+  function appendObject(id, file, scale, position, rotation, scale) {
+
+  }
+</script>
