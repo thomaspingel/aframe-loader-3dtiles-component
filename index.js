@@ -80,6 +80,9 @@ AFRAME.registerComponent('lasloader', {
       [237, 143, 2], //13+: Reserved
     ]
 
+    // distance in z-coordinate from origin to render the pointcloud
+    this.renderDistance = 50;
+
     let model = await this._initCloud();
     console.log(model);
 
@@ -97,8 +100,13 @@ AFRAME.registerComponent('lasloader', {
     this.geometry = new BufferGeometry();
 
     this.positions = model.attributes.POSITION.value;
-    this.colors = model.attributes.COLOR_0.value;
+    // if(model.attributes.keys.includes("COLOR_0") ){
+    //   this.colors = model.attributes.COLOR_0.value;
+    // } else {
+      
+    // }
     this.classification = model.attributes.classification.value;
+    this.colors = new Uint8Array(this.classification.length * 4).fill(0);
 
     // translate the entire pointcloud so that the center of it is at 0,0,100 (good for viewing)
     for(let i =0; i< this.positions.length;i++){
@@ -107,14 +115,17 @@ AFRAME.registerComponent('lasloader', {
       }else if(i%3==1){
         this.positions[i]-=this.center[1];
       }else{
-        this.positions[i]-=this.center[2]+2;
+        this.positions[i]-=this.center[2]+this.renderDistance;
       }
     }
 
     // Set colors to classification based on standard color scheme
     for(let i = 0; i < this.classification.length; i++){
       if(this.classification[i] >13){
-        console.log(i+" "+ this.classification[i]);
+        //console.log(i+" "+ this.classification[i]);
+        this.colors[i*4] = 237;
+        this.colors[(i*4) + 1] = 143;
+        this.colors[(i*4) + 2] = 2;
       } else {
         this.colors[i*4] = this.classificationColors[(this.classification)[i]][0];
         this.colors[(i*4) + 1] = this.classificationColors[this.classification[i]][1];
@@ -184,14 +195,13 @@ AFRAME.registerComponent('lasloader', {
       for(let i=0; i<indices.length;i++){
         this.classification[indices[i]]=clns[i];
       }
-      this.update();
+      this.update(this.data);
     }
   },
   update: async function (oldData) {
 
-
-
     if (oldData.url !== this.data.url) {
+      console.log("reloading pointcloud to new url", this.data.url);
       if (this.runtime) {
         this.runtime.dispose();
         this.runtime = null;
@@ -211,8 +221,12 @@ AFRAME.registerComponent('lasloader', {
       this.geometry = new BufferGeometry();
 
       this.positions = model.attributes.POSITION.value;
-      this.colors = model.attributes.COLOR_0.value;
+      console.log(model.attributes.keys);
+      // if(model.attributes.hasAttribute("COLOR_0") ){
+      //   this.colors = model.attributes.COLOR_0.value;
+      // }
       this.classification = model.attributes.classification.value;
+      this.colors = new Float32Array(this.classification.length * 4).fill(0);
 
       // translate the entire pointcloud so that the center of it is at 0,0,100 (good for viewing)
       for(let i =0; i< this.positions.length;i++){
@@ -221,7 +235,7 @@ AFRAME.registerComponent('lasloader', {
         }else if(i%3==1){
           this.positions[i]-=this.center[1];
         }else{
-          this.positions[i]-=this.center[2]+2;
+          this.positions[i]-=this.center[2]+this.renderDistance;
         }
       }
     }
@@ -235,7 +249,10 @@ AFRAME.registerComponent('lasloader', {
     // Set colors to classification based on standard color scheme defined in this.classificationColors
     for(let i = 0; i < this.classification.length; i++){
       if(this.classification[i] >13){
-        console.log(i+" "+ this.classification[i]);
+        //console.log(i+" "+ this.classification[i]);
+        this.colors[i*4] = 237;
+        this.colors[(i*4) + 1] = 143;
+        this.colors[(i*4) + 2] = 2;
       } else {
         this.colors[i*4] = this.classificationColors[(this.classification)[i]][0];
         this.colors[(i*4) + 1] = this.classificationColors[this.classification[i]][1];
