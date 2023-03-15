@@ -82,7 +82,7 @@ AFRAME.registerComponent('lasloader', {
 
     // distance in z-coordinate from origin to render the pointcloud
     this.renderDistance = 50;
-
+    
     let model = await this._initCloud();
     console.log(model);
 
@@ -221,12 +221,14 @@ AFRAME.registerComponent('lasloader', {
       this.geometry = new BufferGeometry();
 
       this.positions = model.attributes.POSITION.value;
+
       console.log(model.attributes.keys);
       // if(model.attributes.hasAttribute("COLOR_0") ){
       //   this.colors = model.attributes.COLOR_0.value;
       // }
       this.classification = model.attributes.classification.value;
       this.colors = new Uint8Array(this.classification.length * 4).fill(255);
+
 
       // translate the entire pointcloud so that the center of it is at 0,0,100 (good for viewing)
       for(let i =0; i< this.positions.length;i++){
@@ -235,7 +237,9 @@ AFRAME.registerComponent('lasloader', {
         }else if(i%3==1){
           this.positions[i]-=this.center[1];
         }else{
+
           this.positions[i]-=this.center[2]+this.renderDistance;
+
         }
       }
     }
