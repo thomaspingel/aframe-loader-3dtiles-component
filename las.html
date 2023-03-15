@@ -68,7 +68,7 @@
   </a-camera>
 
   <!-- CONTROLS -->
-  <a-entity oculus-touch-controls="hand: left" raycaster="objects:#pointcloud; showLine:true" trigger>
+  <a-entity oculus-touch-controls="hand: left" raycaster="objects: .collidable; showLine:true; near: 0.1; far:100" trigger>
     <!-- <a-sphere  id="sph" position="0 0 50" material="color:red" scale="0.2 0.2 0.2"></a-sphere> -->
   </a-entity>
   <a-entity oculus-touch-controls="hand: right" trigger ></a-entity>
@@ -77,6 +77,7 @@
   <!-- POINTCLOUD -->
 <a-entity
   id="pointcloud"
+  class="collidable"
   position="0 0 0"
   rotation="0 0 0"
   scale="1 1 1"
@@ -86,6 +87,7 @@
     downid: #download-buttonid;
     cameraEl: #camera;
     pointcloudColoring: classification; 
+    renderDistance: 30
     "
   >
 </a-entity>

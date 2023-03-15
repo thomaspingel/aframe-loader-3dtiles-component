@@ -5,6 +5,7 @@ AFRAME.registerComponent('classifier', {
 });
 
 AFRAME.registerComponent('trigger', {
+    dependencies: ['raycaster'],
     init: function () {
         this.el.addEventListener('triggerdown', this.TriggerDown);
         this.el.addEventListener('raycaster-intersection', function (evt) {
@@ -16,18 +17,31 @@ AFRAME.registerComponent('trigger', {
             let ids = [];
             let clns = [];
             let intersections = evt.detail.intersections;
+            this.raycaster_intersections = evt.detail.intersections;
+            this.raycaster_els = evt.detail.els;
             for(let i=0; i<intersections.length; i++){
                 //console.log(evt.detail.intersections[i].index, cls[evt.detail.intersections[i].index]);
                 ids.push(intersections[i].index);
                 clns.push(7);
             }
-            evt.detail.els[0].components.lasloader.classify(ids,clns);
-            //evt.detail.els[0].components.lasloader.update(evt.detail.els[0].components.lasloader.data);
+            //console.log(evt.detail.els);
+            if( evt!=null && evt.detail.els.length > 0 && evt.detail.els[0].components.lasloader != null){
+                evt.detail.els[0].components.lasloader.classify(ids,clns);
+                evt.detail.els[0].components.lasloader.update(evt.detail.els[0].components.lasloader.data);
+            }
+
            });
       },
       TriggerDown: function (evt) {
-        console.log(evt);
-        console.log(evt.srcElement);
+        //console.log(evt);
+        //console.log(evt.srcElement);
+        let intersections = this.raycaster_intersections;
+        for(let i=0; i<intersections.length; i++){
+            //console.log(evt.detail.intersections[i].index, cls[evt.detail.intersections[i].index]);
+            ids.push(intersections[i].index);
+            clns.push(7);
+        }
+        (this.raycaster_els)[0].components.lasloader.classify(ids,clns);
       }
 
 });

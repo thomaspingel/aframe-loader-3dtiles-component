@@ -49,7 +49,7 @@ AFRAME.registerComponent('lasloader', {
     cameraEl: { type: 'selector' },
     maximumSSE: { type: 'int', default: 16 },
     maximumMem: { type: 'int', default: 32 },
-    distanceScale: { type: 'number', default: 1.0 },
+    renderDistance: { type: 'number', default: 50 },
     pointcloudColoring: { type: 'string', default: 'white' },
     pointcloudElevationRange: { type: 'array', default: ['0', '400'] },
     classificationColors: {type: 'array', default: []},
@@ -81,7 +81,7 @@ AFRAME.registerComponent('lasloader', {
     ]
 
     // distance in z-coordinate from origin to render the pointcloud
-    this.renderDistance = 50;
+    this.renderDistance = this.data.renderDistance;
     
     let model = await this._initCloud();
     console.log(model);
@@ -244,8 +244,8 @@ AFRAME.registerComponent('lasloader', {
       }
     }
 
-    console.log("update");
-    console.log(this.classification);
+    //console.log("update");
+    //console.log(this.classification);
 
     // Create geometry.
     this.geometry = new BufferGeometry();
