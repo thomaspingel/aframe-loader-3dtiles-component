@@ -12,7 +12,7 @@ module.exports = {
   output: {
     globalObject: 'this',
     path: path.join(__dirname, 'dist'),
-    filename: process.env.NODE_ENV === 'production' ? 'aframe-loader-3dtiles-component.min.js' : 'aframe-loader-3dtiles-component.js',
+    filename: process.env.NODE_ENV === 'production' ? 'aframe-loader-laz-component.min.js' : 'aframe-loader-laz-component.js',
     publicPath: '/dist',
     libraryTarget: 'umd'
   },
