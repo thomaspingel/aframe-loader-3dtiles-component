@@ -226,7 +226,7 @@ AFRAME.registerComponent('lasloader', {
       //   this.colors = model.attributes.COLOR_0.value;
       // }
       this.classification = model.attributes.classification.value;
-      this.colors = new Float32Array(this.classification.length * 4).fill(0);
+      this.colors = new Uint8Array(this.classification.length * 4).fill(255);
 
       // translate the entire pointcloud so that the center of it is at 0,0,100 (good for viewing)
       for(let i =0; i< this.positions.length;i++){
