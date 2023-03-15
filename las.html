@@ -81,6 +81,7 @@
   scale="1 1 1"
   classifier 
   lasloader="
+
     url: https://rawhitten.github.io/pdal.southwest.09242022.laz;
     downid: #download-buttonid;
     cameraEl: #camera;
@@ -94,7 +95,15 @@
 </body>
 
 <!-- CHANGING URL -->
+<!--http://rawhitten.github.io/chunk.laz
+-->
 <script>
+
+  const params = new URLSearchParams(window.location.search)
+  // const email = params.urlParams.get('email');
+  // params.urlParams
+  // console.log(email)
+
   var sceneEl = document.querySelector('a-scene');
 
   function LoadURL() {
@@ -104,9 +113,8 @@
     const pointcloud = document.getElementById("pointcloud");
     console.log(pointcloud)
     console.log(pointcloud.getAttribute("lasloader"))
-    // pointcloud.parentNode.removeChild(pointcloud);
-    pointcloud.setAttribute('lasloader', {url: 'https://rawhitten.github.io/tree.laz'});
-    // sceneEl.appendChild(pointcloud);
+    // pointcloud.setAttribute('lasloader', {url: 'https://rawhitten.github.io/tree.laz'});
+    pointcloud.setAttribute('lasloader', {url: textboxurl.components.textarea.textarea.value});
   }
 
   const loadbttn = document.getElementById("loadurl-buttonid");
