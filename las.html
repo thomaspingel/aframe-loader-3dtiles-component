@@ -4,50 +4,11 @@
   <script src="aframe.min.js"></script>
   <script src='https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/utils/WorkerPool.js%27%3E'></script>
   <script src='https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/loaders/KTX2Loader.js%27%3E'></script>
-  <script src="./dist/aframe-loader-laz-component.js?v27"></script>
+  <script src="./dist/aframe-loader-laz-component.js?v62"></script>
   <script src="./classifier.js"></script>
 </head>
 
-<!-- define camera logger component -->
-  <script>
-    AFRAME.registerComponent('camera-logger', {
-
-      schema: {
-        timestamp: {type: 'int'},
-        seconds: {type: 'int'} // default 0
-      },
-
-      log : function () {
-        var cameraEl = this.el.sceneEl.camera.el;
-        var rotation = cameraEl.getAttribute('rotation');
-        var worldPos = new THREE.Vector3();
-        worldPos.setFromMatrixPosition(cameraEl.object3D.matrixWorld);
-        console.log("Time: " + this.data.seconds
-                + "; Camera Position: (" + worldPos.x.toFixed(2) + ", " + worldPos.y.toFixed(2) + ", " + worldPos.z.toFixed(2)
-                + "); Camera Rotation: (" + rotation.x.toFixed(2) + ", " + rotation.y.toFixed(2) + ", " + rotation.z.toFixed(2) + ")");
-      },
-
-      play: function () {
-        this.data.timestamp = Date.now();
-        this.log();
-      },
-
-      tick: function () {
-        if (Date.now() - this.data.timestamp > 1000) {
-          this.data.timestamp += 1000;
-          this.data.seconds += 1;
-          this.log();
-        }
-      },
-    });
-  </script>
-
-
-
-
-
 <body>
-
   <a-scene environment="preset: default"
          background="color: #AAAAAA"
          keyboard-shortcuts="enterVR: false;"
@@ -57,13 +18,9 @@
   <!-- CAMERA -->
   <!-- <a-camera id="camera" camera-logger position="553837 4118282 624" rotation="-36 -256 0" > -->
   <a-camera id="camera" position="0 2 0">
-    <a-entity id="download-buttonid" geometry="primitive: box" material="color: red" position="-3 -1 -3"></a-entity>
-
-    <a-entity id="loadurl-buttonid" geometry="primitive: box" material="color: purple" position="3 -1 -3"></a-entity>
-
-    <a-entity position="0 1.5 -2" id="urltext" textarea="backgroundColor:white; color:black; cols:10; rows:1;value:5;"></a-entity>
-
-    <a-button onclick="LoadURL()">Load URL!</a-button>
+    <a-entity id="download-buttonid" geometry="primitive: box" material="color: red" position="-3 1 -2.5"></a-entity>
+<!--    <a-entity id="loadurl-buttonid" geometry="primitive: box" material="color: purple" position="3 -1 -3"></a-entity>-->
+<!--    <a-entity position="0 1.5 -2" id="urltext" textarea="backgroundColor:white; color:black; cols:10; rows:1;value:5;"></a-entity>-->
   </a-camera>
 
   <!-- CONTROLS -->
@@ -81,8 +38,7 @@
   scale="1 1 1"
   classifier 
   lasloader="
-
-    url: https://rawhitten.github.io/pdal.southwest.09242022.laz;
+    url: 'nothing_for_now';
     downid: #download-buttonid;
     cameraEl: #camera;
     pointcloudColoring: classification; 
@@ -96,32 +52,28 @@
 
 <!-- CHANGING URL -->
 <!--http://rawhitten.github.io/chunk.laz
--->
+https://rawhitten.github.io/pdal.southwest.09242022.laz;-->
+<!--https://rawhitten.github.io/tree.laz-->
+
+
 <script>
+  const pointcloud = document.getElementById("pointcloud");
+  console.log(window.location.search)
+  var url = new URL(window.location.href);
+  var PTlink = url.searchParams.get("link");
+  pointcloud.setAttribute('lasloader', {url: PTlink});
 
-  const params = new URLSearchParams(window.location.search)
-  // const email = params.urlParams.get('email');
-  // params.urlParams
-  // console.log(email)
-
-  var sceneEl = document.querySelector('a-scene');
-
-  function LoadURL() {
-    const textboxurl = document.getElementById("urltext");
-    console.log(textboxurl.components.textarea.textarea.value)
-    // document.getElementById("resultado").innerHTML = textboxurl.value;
-    const pointcloud = document.getElementById("pointcloud");
-    console.log(pointcloud)
-    console.log(pointcloud.getAttribute("lasloader"))
-    // pointcloud.setAttribute('lasloader', {url: 'https://rawhitten.github.io/tree.laz'});
-    pointcloud.setAttribute('lasloader', {url: textboxurl.components.textarea.textarea.value});
-  }
-
-  const loadbttn = document.getElementById("loadurl-buttonid");
-  loadbttn.addEventListener("click", LoadURL)
-
-
-  function appendObject(id, file, scale, position, rotation, scale) {
-
-  }
+  // var sceneEl = document.querySelector('a-scene');
+  // function LoadURL() {
+  //   const textboxurl = document.getElementById("urltext");
+  //   console.log(textboxurl.components.textarea.textarea.value)
+  //   // document.getElementById("resultado").innerHTML = textboxurl.value;
+  //   const pointcloud = document.getElementById("pointcloud");
+  //   console.log(pointcloud)
+  //   console.log(pointcloud.getAttribute("lasloader"))
+  //   // pointcloud.setAttribute('lasloader', {url: 'https://rawhitten.github.io/tree.laz'});
+  //   pointcloud.setAttribute('lasloader', {url: textboxurl.components.textarea.textarea.value});
+  // }
+  // const loadbttn = document.getElementById("loadurl-buttonid");
+  // loadbttn.addEventListener("click", LoadURL)
 </script>

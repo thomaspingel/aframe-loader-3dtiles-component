@@ -114,7 +114,10 @@ AFRAME.registerComponent('lasloader', {
     // Set colors to classification based on standard color scheme
     for(let i = 0; i < this.classification.length; i++){
       if(this.classification[i] >13){
-        console.log(i+" "+ this.classification[i]);
+        // console.log(i+" "+ this.classification[i]);
+        this.colors[i*4] = this.classificationColors[0][0];
+        this.colors[(i*4) + 1] = this.classificationColors[0][1];
+        this.colors[(i*4) + 2] = this.classificationColors[0][2];
       } else {
         this.colors[i*4] = this.classificationColors[(this.classification)[i]][0];
         this.colors[(i*4) + 1] = this.classificationColors[this.classification[i]][1];
@@ -188,9 +191,7 @@ AFRAME.registerComponent('lasloader', {
     }
   },
   update: async function (oldData) {
-
-
-
+    
     if (oldData.url !== this.data.url) {
       if (this.runtime) {
         this.runtime.dispose();
@@ -234,8 +235,11 @@ AFRAME.registerComponent('lasloader', {
 
     // Set colors to classification based on standard color scheme defined in this.classificationColors
     for(let i = 0; i < this.classification.length; i++){
-      if(this.classification[i] >13){
-        console.log(i+" "+ this.classification[i]);
+      if(this.classification[i] > 13){
+        // console.log(i+" "+ this.classification[i]);
+        this.colors[i*4] = this.classificationColors[0][0];
+        this.colors[(i*4) + 1] = this.classificationColors[0][1];
+        this.colors[(i*4) + 2] = this.classificationColors[0][1];
       } else {
         this.colors[i*4] = this.classificationColors[(this.classification)[i]][0];
         this.colors[(i*4) + 1] = this.classificationColors[this.classification[i]][1];
