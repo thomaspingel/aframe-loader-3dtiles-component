@@ -191,7 +191,7 @@ AFRAME.registerComponent('lasloader', {
     }
   },
   update: async function (oldData) {
-    
+
     if (oldData.url !== this.data.url) {
       if (this.runtime) {
         this.runtime.dispose();
