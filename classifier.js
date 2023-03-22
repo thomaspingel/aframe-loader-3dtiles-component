@@ -27,7 +27,7 @@ AFRAME.registerComponent('trigger', {
             //console.log(evt.detail.els);
             if( evt!=null && evt.detail.els.length > 0 && evt.detail.els[0].components.lasloader != null){
                 evt.detail.els[0].components.lasloader.classify(ids,clns);
-                evt.detail.els[0].components.lasloader.update(evt.detail.els[0].components.lasloader.data);
+               // evt.detail.els[0].components.lasloader.update(evt.detail.els[0].components.lasloader.data);
             }
 
            });

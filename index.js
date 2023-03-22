@@ -47,15 +47,9 @@ AFRAME.registerComponent('lasloader', {
     url: { type: 'string' },
     downid: { type: 'string' },
     cameraEl: { type: 'selector' },
-    maximumSSE: { type: 'int', default: 16 },
-    maximumMem: { type: 'int', default: 32 },
     renderDistance: { type: 'number', default: 50 },
     pointcloudColoring: { type: 'string', default: 'white' },
-    pointcloudElevationRange: { type: 'array', default: ['0', '400'] },
-    classificationColors: {type: 'array', default: []},
-    classification: {type: 'array', default: []},
-    colors: {type: 'array', default: []},
-    positions: {type: 'array', default: []}
+    pointcloudElevationRange: { type: 'array', default: ['0', '400'] }
   },
   init: async function () {
 
@@ -249,6 +243,11 @@ AFRAME.registerComponent('lasloader', {
 
     // Create geometry.
     this.geometry = new BufferGeometry();
+
+    // temp code to make the 30's normal
+    for(let i=0;i<this.classification.length;i++){
+      this.classification[i] = this.classification[i] % 32;
+    }
 
     // Set colors to classification based on standard color scheme defined in this.classificationColors
     for(let i = 0; i < this.classification.length; i++){
