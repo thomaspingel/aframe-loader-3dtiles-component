@@ -47,15 +47,9 @@ AFRAME.registerComponent('lasloader', {
     url: { type: 'string' },
     downid: { type: 'string' },
     cameraEl: { type: 'selector' },
-    maximumSSE: { type: 'int', default: 16 },
-    maximumMem: { type: 'int', default: 32 },
-    distanceScale: { type: 'number', default: 1.0 },
+    renderDistance: { type: 'number', default: 50 },
     pointcloudColoring: { type: 'string', default: 'white' },
-    pointcloudElevationRange: { type: 'array', default: ['0', '400'] },
-    classificationColors: {type: 'array', default: []},
-    classification: {type: 'array', default: []},
-    colors: {type: 'array', default: []},
-    positions: {type: 'array', default: []}
+    pointcloudElevationRange: { type: 'array', default: ['0', '400'] }
   },
   init: async function () {
 
@@ -81,7 +75,7 @@ AFRAME.registerComponent('lasloader', {
     ]
 
     // distance in z-coordinate from origin to render the pointcloud
-    this.renderDistance = 50;
+    this.renderDistance = this.data.renderDistance;
     
     let model = await this._initCloud();
     console.log(model);
@@ -244,11 +238,16 @@ AFRAME.registerComponent('lasloader', {
       }
     }
 
-    console.log("update");
-    console.log(this.classification);
+    //console.log("update");
+    //console.log(this.classification);
 
     // Create geometry.
     this.geometry = new BufferGeometry();
+
+    // temp code to make the 30's normal
+    for(let i=0;i<this.classification.length;i++){
+      this.classification[i] = this.classification[i] % 32;
+    }
 
     // Set colors to classification based on standard color scheme defined in this.classificationColors
     for(let i = 0; i < this.classification.length; i++){
@@ -310,167 +309,168 @@ AFRAME.registerComponent('lasloader', {
 
 
 // /**
+//  * ORIGINAL: We aren't using this!
 //  * 3D Tiles component for A-Frame.
 //  */
 
-AFRAME.registerComponent('loader-3dtiles', {
-  schema: {
-    url: { type: 'string' },
-    cameraEl: { type: 'selector' },
-    maximumSSE: { type: 'int', default: 16 },
-    maximumMem: { type: 'int', default: 32 },
-    distanceScale: { type: 'number', default: 1.0 },
-    pointcloudColoring: { type: 'string', default: 'white' },
-    pointcloudElevationRange: { type: 'array', default: ['0', '400'] },
-    wireframe: { type: 'boolean', default: false },
-    showStats: { type: 'boolean', default: false },
-    cesiumIONToken: { type: 'string' }
-  },
-  init: async function () {
-    this.camera = this.data.cameraEl?.object3D.children[0] ?? document.querySelector('a-scene').camera;
-    if (!this.camera) {
-      throw new Error('3D Tiles: Please add an active camera or specify the target camera via the cameraEl property');
-    }
-    const { model, runtime } = await this._initTileset();
-    this.el.setObject3D('tileset', model);
+// AFRAME.registerComponent('loader-3dtiles', {
+//   schema: {
+//     url: { type: 'string' },
+//     cameraEl: { type: 'selector' },
+//     maximumSSE: { type: 'int', default: 16 },
+//     maximumMem: { type: 'int', default: 32 },
+//     distanceScale: { type: 'number', default: 1.0 },
+//     pointcloudColoring: { type: 'string', default: 'white' },
+//     pointcloudElevationRange: { type: 'array', default: ['0', '400'] },
+//     wireframe: { type: 'boolean', default: false },
+//     showStats: { type: 'boolean', default: false },
+//     cesiumIONToken: { type: 'string' }
+//   },
+//   init: async function () {
+//     this.camera = this.data.cameraEl?.object3D.children[0] ?? document.querySelector('a-scene').camera;
+//     if (!this.camera) {
+//       throw new Error('3D Tiles: Please add an active camera or specify the target camera via the cameraEl property');
+//     }
+//     const { model, runtime } = await this._initTileset();
+//     this.el.setObject3D('tileset', model);
 
-    this.originalCamera = this.camera;
-    this.el.sceneEl.addEventListener('camera-set-active', (e) => {
-      // TODO: For some reason after closing the inspector this event is fired with an empty camera,
-      // so revert to the original camera used.
-      //
-      // TODO: Does not provide the right Inspector perspective camera
-      this.camera = e.detail.cameraEl.object3D.children[0] ?? this.originalCamera;
-    });
-    this.el.sceneEl.addEventListener('enter-vr', (e) => {
-      this.originalCamera = this.camera;
-      try {
-        this.camera = this.el.sceneEl.renderer.xr.getCamera(this.camera);
+//     this.originalCamera = this.camera;
+//     this.el.sceneEl.addEventListener('camera-set-active', (e) => {
+//       // TODO: For some reason after closing the inspector this event is fired with an empty camera,
+//       // so revert to the original camera used.
+//       //
+//       // TODO: Does not provide the right Inspector perspective camera
+//       this.camera = e.detail.cameraEl.object3D.children[0] ?? this.originalCamera;
+//     });
+//     this.el.sceneEl.addEventListener('enter-vr', (e) => {
+//       this.originalCamera = this.camera;
+//       try {
+//         this.camera = this.el.sceneEl.renderer.xr.getCamera(this.camera);
 
-        // FOV Code from https://github.com/mrdoob/three.js/issues/21869
-        this.el.sceneEl.renderer.xr.getSession().requestAnimationFrame((time, frame) => {
-          const ref = this.el.sceneEl.renderer.xr.getReferenceSpace();
-          const pose = frame.getViewerPose(ref);
-          if (pose) {
-            const fovi = pose.views[0].projectionMatrix[5];
-            this.camera.fov = Math.atan2(1, fovi) * 2 * 180 / Math.PI;
-          }
-        });
-      } catch (e) {
-        console.warn('Could not get VR camera');
-      }
-    });
-    this.el.sceneEl.addEventListener('exit-vr', (e) => {
-      this.camera = this.originalCamera;
-    });
+//         // FOV Code from https://github.com/mrdoob/three.js/issues/21869
+//         this.el.sceneEl.renderer.xr.getSession().requestAnimationFrame((time, frame) => {
+//           const ref = this.el.sceneEl.renderer.xr.getReferenceSpace();
+//           const pose = frame.getViewerPose(ref);
+//           if (pose) {
+//             const fovi = pose.views[0].projectionMatrix[5];
+//             this.camera.fov = Math.atan2(1, fovi) * 2 * 180 / Math.PI;
+//           }
+//         });
+//       } catch (e) {
+//         console.warn('Could not get VR camera');
+//       }
+//     });
+//     this.el.sceneEl.addEventListener('exit-vr', (e) => {
+//       this.camera = this.originalCamera;
+//     });
 
-    if (this.data.showStats) {
-      this.stats = this._initStats();
-    }
-    if (THREE.Cache.enabled) {
-      console.warn('3D Tiles loader cannot work with THREE.Cache, disabling.');
-      THREE.Cache.enabled = false;
-    }
-    await this._nextFrame();
-    this.runtime = runtime;
-    this.runtime.setElevationRange(this.data.pointcloudElevationRange.map(n => Number(n)));
-  },
-  update: async function (oldData) {
-    if (oldData.url !== this.data.url) {
-      if (this.runtime) {
-        this.runtime.dispose();
-        this.runtime = null;
-      }
-      const { model, runtime } = await this._initTileset();
-      this.el.setObject3D('tileset', model);
-      await this._nextFrame();
-      this.runtime = runtime;
-    } else if (this.runtime) {
-      this.runtime.setPointCloudColoring(this._resolvePointcloudColoring(this.data.pointCloudColoring));
-      this.runtime.setWireframe(this.data.wireframe);
-      this.runtime.setViewDistanceScale(this.data.distanceScale);
-      this.runtime.setElevationRange(this.data.pointcloudElevationRange.map(n => Number(n)));
-    }
+//     if (this.data.showStats) {
+//       this.stats = this._initStats();
+//     }
+//     if (THREE.Cache.enabled) {
+//       console.warn('3D Tiles loader cannot work with THREE.Cache, disabling.');
+//       THREE.Cache.enabled = false;
+//     }
+//     await this._nextFrame();
+//     this.runtime = runtime;
+//     this.runtime.setElevationRange(this.data.pointcloudElevationRange.map(n => Number(n)));
+//   },
+//   update: async function (oldData) {
+//     if (oldData.url !== this.data.url) {
+//       if (this.runtime) {
+//         this.runtime.dispose();
+//         this.runtime = null;
+//       }
+//       const { model, runtime } = await this._initTileset();
+//       this.el.setObject3D('tileset', model);
+//       await this._nextFrame();
+//       this.runtime = runtime;
+//     } else if (this.runtime) {
+//       this.runtime.setPointCloudColoring(this._resolvePointcloudColoring(this.data.pointCloudColoring));
+//       this.runtime.setWireframe(this.data.wireframe);
+//       this.runtime.setViewDistanceScale(this.data.distanceScale);
+//       this.runtime.setElevationRange(this.data.pointcloudElevationRange.map(n => Number(n)));
+//     }
 
-    if (this.data.showStats && !this.stats) {
-      this.stats = this._initStats();
-    }
-    if (!this.data.showStats && this.stats) {
-      this.el.sceneEl.removeChild(this.stats);
-      this.stats = null;
-    }
-  },
-  tick: function (t, dt) {
-    if (this.runtime) {
-      this.runtime.update(dt, this.el.sceneEl.renderer, this.camera);
-      if (this.stats) {
-        const worldPos = new Vector3();
-        this.camera.getWorldPosition(worldPos);
-        const stats = this.runtime.getStats();
-        this.stats.setAttribute(
-          'textarea',
-          'text',
-          Object.values(stats.stats).map(s => `${s.name}: ${s.count}`).join('\n')
-        );
-        const newPos = new Vector3();
-        newPos.copy(worldPos);
-        newPos.z -= 2;
-        this.stats.setAttribute('position', newPos);
-      }
-    }
-  },
-  remove: function () {
-    if (this.runtime) {
-      this.runtime.dispose();
-    }
-  },
-  _resolvePointcloudColoring () {
-    const pointCloudColoring = POINT_CLOUD_COLORING[this.data.pointcloudColoring];
-    if (!pointCloudColoring) {
-      console.warn('Invalid value for point cloud coloring');
-      return PointCloudColoring.White;
-    } else {
-      return pointCloudColoring;
-    }
-  },
-  _initTileset: async function () {
-    const pointCloudColoring = this._resolvePointcloudColoring(this.data.pointcloudColoring);
+//     if (this.data.showStats && !this.stats) {
+//       this.stats = this._initStats();
+//     }
+//     if (!this.data.showStats && this.stats) {
+//       this.el.sceneEl.removeChild(this.stats);
+//       this.stats = null;
+//     }
+//   },
+//   tick: function (t, dt) {
+//     if (this.runtime) {
+//       this.runtime.update(dt, this.el.sceneEl.renderer, this.camera);
+//       if (this.stats) {
+//         const worldPos = new Vector3();
+//         this.camera.getWorldPosition(worldPos);
+//         const stats = this.runtime.getStats();
+//         this.stats.setAttribute(
+//           'textarea',
+//           'text',
+//           Object.values(stats.stats).map(s => `${s.name}: ${s.count}`).join('\n')
+//         );
+//         const newPos = new Vector3();
+//         newPos.copy(worldPos);
+//         newPos.z -= 2;
+//         this.stats.setAttribute('position', newPos);
+//       }
+//     }
+//   },
+//   remove: function () {
+//     if (this.runtime) {
+//       this.runtime.dispose();
+//     }
+//   },
+//   _resolvePointcloudColoring () {
+//     const pointCloudColoring = POINT_CLOUD_COLORING[this.data.pointcloudColoring];
+//     if (!pointCloudColoring) {
+//       console.warn('Invalid value for point cloud coloring');
+//       return PointCloudColoring.White;
+//     } else {
+//       return pointCloudColoring;
+//     }
+//   },
+//   _initTileset: async function () {
+//     const pointCloudColoring = this._resolvePointcloudColoring(this.data.pointcloudColoring);
 
-    return Loader3DTiles.load({
-      url: this.data.url,
-      renderer: this.el.sceneEl.renderer,
-      options: {
-        dracoDecoderPath: 'https://unpkg.com/three@0.137.0/examples/js/libs/draco',
-        basisTranscoderPath: 'https://unpkg.com/three@0.137.0/examples/js/libs/basis',
-        cesiumIONToken: this.data.cesiumIONToken,
-        maximumScreenSpaceError: this.data.maximumSSE,
-        maximumMemoryUsage: this.data.maximumMem,
-        viewDistanceScale: this.data.distanceScale,
-        wireframe: this.data.wireframe,
-        pointCloudColoring: pointCloudColoring,
-        updateTransforms: true
-      }
-    });
-  },
-  _initStats: function () {
-    const stats = document.createElement('a-entity');
-    this.el.sceneEl.appendChild(stats);
-    stats.setAttribute('position', '-0.5 0 -1');
-    stats.setAttribute('textarea', {
-      cols: 30,
-      rows: 15,
-      text: '',
-      color: 'white',
-      disabledBackgroundColor: '#0c1e2c',
-      disabled: true
-    });
-    return stats;
-  },
-  _nextFrame: async function () {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        resolve();
-      }, 0);
-    });
-  }
-});
+//     return Loader3DTiles.load({
+//       url: this.data.url,
+//       renderer: this.el.sceneEl.renderer,
+//       options: {
+//         dracoDecoderPath: 'https://unpkg.com/three@0.137.0/examples/js/libs/draco',
+//         basisTranscoderPath: 'https://unpkg.com/three@0.137.0/examples/js/libs/basis',
+//         cesiumIONToken: this.data.cesiumIONToken,
+//         maximumScreenSpaceError: this.data.maximumSSE,
+//         maximumMemoryUsage: this.data.maximumMem,
+//         viewDistanceScale: this.data.distanceScale,
+//         wireframe: this.data.wireframe,
+//         pointCloudColoring: pointCloudColoring,
+//         updateTransforms: true
+//       }
+//     });
+//   },
+//   _initStats: function () {
+//     const stats = document.createElement('a-entity');
+//     this.el.sceneEl.appendChild(stats);
+//     stats.setAttribute('position', '-0.5 0 -1');
+//     stats.setAttribute('textarea', {
+//       cols: 30,
+//       rows: 15,
+//       text: '',
+//       color: 'white',
+//       disabledBackgroundColor: '#0c1e2c',
+//       disabled: true
+//     });
+//     return stats;
+//   },
+//   _nextFrame: async function () {
+//     return new Promise((resolve, reject) => {
+//       setTimeout(() => {
+//         resolve();
+//       }, 0);
+//     });
+//   }
+// });
