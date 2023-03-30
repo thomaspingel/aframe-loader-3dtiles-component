@@ -1,6 +1,35 @@
-AFRAME.registerComponent('classifier', {
+/**
+ * Attempt to create custom THREEjs raycaster component to use with points
+ */
+AFRAME.registerComponent('pointraycaster', {
     init: function () {
-        console.log(this.el.getAttribute('loaderlas','classification'));
+        this.raycaster = this.el.components.raycaster;
+        this.pointer = new THREE.Vector2();
+        console.log("pointraycaster init");
+        console.log(this.raycaster);
+        window.addEventListener( 'pointermove', onPointerMove );
+    
+        window.requestAnimationFrame(render);
+    },
+    onPointerMove: function( event ) {
+        // calculate pointer position in normalized device coordinates
+        // (-1 to +1) for both components
+    
+        pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+        pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+    },
+    render: function() {
+        // update the picking ray with the camera and pointer position
+        this.raycaster.setFromCamera( pointer, camera );
+    
+        // calculate objects intersecting the picking ray
+        const intersects = raycaster.intersectObjects( scene.children );
+        console.log(intersects);
+        for ( let i = 0; i < intersects.length; i ++ ) {
+            intersects[ i ].object.material.color.set( 0xff0000 );
+        }
+    
+        renderer.render( scene, camera );
     }
 });
 
@@ -29,7 +58,7 @@ AFRAME.registerComponent('trigger', {
                 evt.detail.els[0].components.lasloader.classify(ids,clns);
                // evt.detail.els[0].components.lasloader.update(evt.detail.els[0].components.lasloader.data);
             }
-            this.el.components.raycaster.setAttribute('enabled',false);
+            console.log(evt.detail);
            });
       },
       TriggerDown: function (evt) {
