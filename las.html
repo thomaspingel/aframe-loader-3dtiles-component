@@ -26,7 +26,7 @@
   </a-camera>
 
   <!-- CONTROLS -->
-  <a-entity oculus-touch-controls="hand: left" raycaster="objects: .collidable; showLine:true; near: 0.1; far:100" trigger>
+  <a-entity oculus-touch-controls="hand: left" raycaster="objects: .collidable; showLine:true; near: 0.1; far:10" trigger>
     <!-- <a-sphere  id="sph" position="0 0 50" material="color:red" scale="0.2 0.2 0.2"></a-sphere> -->
   </a-entity>
   <a-entity oculus-touch-controls="hand: right" trigger ></a-entity>
@@ -45,7 +45,7 @@
     downid: #download-buttonid;
     cameraEl: #camera;
     pointcloudColoring: classification; 
-    renderDistance: 30
+    renderDistance: 15
     "
   >
 </a-entity>

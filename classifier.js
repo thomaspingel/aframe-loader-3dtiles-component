@@ -29,7 +29,7 @@ AFRAME.registerComponent('trigger', {
                 evt.detail.els[0].components.lasloader.classify(ids,clns);
                // evt.detail.els[0].components.lasloader.update(evt.detail.els[0].components.lasloader.data);
             }
-
+            this.el.components.raycaster.setAttribute('enabled',false);
            });
       },
       TriggerDown: function (evt) {
