@@ -38,67 +38,45 @@ AFRAME.registerComponent('trigger', {
     init: function () {
         //console.log(AFRAME);
         //console.log(document.querySelector("#pointcloud"));
-        //this.raycasterEl = AFRAME.scenes.querySelector('[raycaster]');
+            console.log('setting this.paint to false');
+            this.paint = false;
+        
         this.el.addEventListener('triggerdown', this.TriggerDown);
-        this.el.addEventListener('raycaster-intersection', function (evt) {
-            //console.log('Player hit something!', evt.detail.els[0].components.lasloader.classification);
-            //let cls = evt.detail.els[0].components.lasloader.classification;
-            //console.log(evt.detail)
-
-            //add point indices and classifications to array for changing
+        this.el.addEventListener('triggerup', this.TriggerUp);
+    },
+    TriggerDown: function (evt) {
+        evt.srcElement.components.trigger.paint = true;
+        //console.log('trigger down');
+    },
+    TriggerUp: function (evt) {
+        evt.srcElement.components.trigger.paint = false;
+        //console.log('trigger up');
+    },
+    tick: function(time, timeDelta){
+        //console.log(timeDelta);
+        this.el.components.raycaster.refreshObjects();
+        //console.log(this.el.components.raycaster.intersections);
+        console.log(this.paint);
+        if(this.paint){
             let ids = [];
             let clns = [];
-            let intersections = evt.detail.intersections;
-            this.raycaster_intersections = evt.detail.intersections;
-            this.raycaster_els = evt.detail.els;
+            let intersections = this.el.components.raycaster.intersections;
+            //this.raycaster_intersections = this.el.components.raycaster.intersections;
+            //this.raycaster_els = this.els;
             for(let i=0; i<intersections.length; i++){
                 //console.log(evt.detail.intersections[i].index, cls[evt.detail.intersections[i].index]);
                 ids.push(intersections[i].index);
                 clns.push(7);
             }
             //console.log(evt.detail.els);
-            if( evt!=null && evt.detail.els.length > 0 && evt.detail.els[0].components.lasloader != null){
-                evt.detail.els[0].components.lasloader.classify(ids,clns);
-               // evt.detail.els[0].components.lasloader.update(evt.detail.els[0].components.lasloader.data);
-            }
-            console.log(evt.detail);
-           });
-    },
-    tick: function(time, timeDelta){
-        //console.log(timeDelta);
-        this.el.components.raycaster.refreshObjects();
-        //console.log(this.el.components.raycaster.intersections);
-
-        let ids = [];
-        let clns = [];
-        let intersections = this.el.components.raycaster.intersections;
-        //this.raycaster_intersections = this.el.components.raycaster.intersections;
-        //this.raycaster_els = this.els;
-        for(let i=0; i<intersections.length; i++){
-            //console.log(evt.detail.intersections[i].index, cls[evt.detail.intersections[i].index]);
-            ids.push(intersections[i].index);
-            clns.push(7);
+            let ptcld = document.querySelector("#pointcloud");
+            if(intersections.length > 0){
+                //console.log(ptcld.components.lasloader);
+                ptcld.components.lasloader.classify(ids,clns);
+                //ptcld.components.lasloader.update(ptcld.components.lasloader.data);
+            }    
         }
-        //console.log(evt.detail.els);
-        let ptcld = document.querySelector("#pointcloud");
-        if(intersections.length > 0){
-            //console.log(ptcld.components.lasloader);
-            ptcld.components.lasloader.classify(ids,clns);
-            //ptcld.components.lasloader.update(ptcld.components.lasloader.data);
-        }
-        
-       
-    },
-    TriggerDown: function (evt) {
-        //console.log(evt);
-        //console.log(evt.srcElement);
-        let intersections = this.raycaster_intersections;
-        for(let i=0; i<intersections.length; i++){
-            //console.log(evt.detail.intersections[i].index, cls[evt.detail.intersections[i].index]);
-            ids.push(intersections[i].index);
-            clns.push(7);
-        }
-        (this.raycaster_els)[0].components.lasloader.classify(ids,clns);
     }
+
 
 });
