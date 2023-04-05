@@ -36,6 +36,9 @@ AFRAME.registerComponent('pointraycaster', {
 AFRAME.registerComponent('trigger', {
     dependencies: ['raycaster'],
     init: function () {
+        //console.log(AFRAME);
+        //console.log(document.querySelector("#pointcloud"));
+        //this.raycasterEl = AFRAME.scenes.querySelector('[raycaster]');
         this.el.addEventListener('triggerdown', this.TriggerDown);
         this.el.addEventListener('raycaster-intersection', function (evt) {
             //console.log('Player hit something!', evt.detail.els[0].components.lasloader.classification);
@@ -60,8 +63,33 @@ AFRAME.registerComponent('trigger', {
             }
             console.log(evt.detail);
            });
-      },
-      TriggerDown: function (evt) {
+    },
+    tick: function(time, timeDelta){
+        //console.log(timeDelta);
+        this.el.components.raycaster.refreshObjects();
+        //console.log(this.el.components.raycaster.intersections);
+
+        let ids = [];
+        let clns = [];
+        let intersections = this.el.components.raycaster.intersections;
+        //this.raycaster_intersections = this.el.components.raycaster.intersections;
+        //this.raycaster_els = this.els;
+        for(let i=0; i<intersections.length; i++){
+            //console.log(evt.detail.intersections[i].index, cls[evt.detail.intersections[i].index]);
+            ids.push(intersections[i].index);
+            clns.push(7);
+        }
+        //console.log(evt.detail.els);
+        let ptcld = document.querySelector("#pointcloud");
+        if(intersections.length > 0){
+            //console.log(ptcld.components.lasloader);
+            ptcld.components.lasloader.classify(ids,clns);
+            //ptcld.components.lasloader.update(ptcld.components.lasloader.data);
+        }
+        
+       
+    },
+    TriggerDown: function (evt) {
         //console.log(evt);
         //console.log(evt.srcElement);
         let intersections = this.raycaster_intersections;
@@ -71,6 +99,6 @@ AFRAME.registerComponent('trigger', {
             clns.push(7);
         }
         (this.raycaster_els)[0].components.lasloader.classify(ids,clns);
-      }
+    }
 
 });

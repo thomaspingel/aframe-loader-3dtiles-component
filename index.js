@@ -185,7 +185,8 @@ AFRAME.registerComponent('lasloader', {
   classify: function(indices, clns){
     if(indices.length != clns.length){ //error-checking
       console.log("ERROR: tried to classify point array of length %d with values array of length %d", indices.length, clns.length);
-    } else {
+    } else if(this.classification != null) {
+      //console.log("classifying %d points",indices.length);
       for(let i=0; i<indices.length;i++){
         this.classification[indices[i]]=clns[i];
       }
