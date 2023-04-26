@@ -1,47 +1,92 @@
-AFRAME.registerComponent('classifier', {
+/**
+ * Attempt to create custom THREEjs raycaster component to use with points
+ */
+AFRAME.registerComponent('pointraycaster', {
     init: function () {
-        console.log(this.el.getAttribute('loaderlas','classification'));
+        this.raycaster = this.el.components.raycaster;
+        this.pointer = new THREE.Vector2();
+        console.log("pointraycaster init");
+        console.log(this.raycaster);
+        window.addEventListener( 'pointermove', onPointerMove );
+    
+        window.requestAnimationFrame(render);
+    },
+    onPointerMove: function( event ) {
+        // calculate pointer position in normalized device coordinates
+        // (-1 to +1) for both components
+    
+        pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+        pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+    },
+    render: function() {
+        // update the picking ray with the camera and pointer position
+        this.raycaster.setFromCamera( pointer, camera );
+    
+        // calculate objects intersecting the picking ray
+        const intersects = raycaster.intersectObjects( scene.children );
+        console.log(intersects);
+        for ( let i = 0; i < intersects.length; i ++ ) {
+            intersects[ i ].object.material.color.set( 0xff0000 );
+        }
+    
+        renderer.render( scene, camera );
     }
 });
 
 AFRAME.registerComponent('trigger', {
     dependencies: ['raycaster'],
     init: function () {
+        //console.log(AFRAME);
+        //console.log(document.querySelector("#pointcloud"));
+        if(this.paint == null){
+            console.log('setting this.paint to false');
+            this.paint = false;
+        } 
         this.el.addEventListener('triggerdown', this.TriggerDown);
-        this.el.addEventListener('raycaster-intersection', function (evt) {
-            //console.log('Player hit something!', evt.detail.els[0].components.lasloader.classification);
-            //let cls = evt.detail.els[0].components.lasloader.classification;
-            //console.log(evt.detail)
+        this.el.addEventListener('triggerup', this.TriggerUp);
+    },
+    TriggerUp: function (evt) {
+        evt.srcElement.components.trigger.paint = false;
+        console.log('trigger up');
+    },
+    TriggerDown: function (evt) {
+        evt.srcElement.components.trigger.paint = true;
+        console.log('trigger down');
+    },
+    changeClass: function(val){
+      
+    },
 
-            //add point indices and classifications to array for changing
+    tick: function(time, timeDelta){
+        //console.log(timeDelta);
+        this.el.components.raycaster.refreshObjects();
+        //console.log(this.el.components.raycaster.intersections);
+        //console.log(this.paint);
+        //console.log("paint");
+        if(this.paint){
+          console.log('painting');
             let ids = [];
             let clns = [];
-            let intersections = evt.detail.intersections;
-            this.raycaster_intersections = evt.detail.intersections;
-            this.raycaster_els = evt.detail.els;
+            let intersections = this.el.components.raycaster.intersections;
+            console.log(intersections);
+            let ptcld = document.querySelector("#pointcloud");
+            //this.raycaster_intersections = this.el.components.raycaster.intersections;
+            //this.raycaster_els = this.els;
             for(let i=0; i<intersections.length; i++){
-                //console.log(evt.detail.intersections[i].index, cls[evt.detail.intersections[i].index]);
+                console.log(intersections[i].index, clns[intersections[i].index]);
                 ids.push(intersections[i].index);
-                clns.push(7);
+                console.log(ptcld.components.lasloader.data.classificationValue);
+                clns.push(ptcld.components.lasloader.data.classificationValue);
             }
             //console.log(evt.detail.els);
-            if( evt!=null && evt.detail.els.length > 0 && evt.detail.els[0].components.lasloader != null){
-                evt.detail.els[0].components.lasloader.classify(ids,clns);
-               // evt.detail.els[0].components.lasloader.update(evt.detail.els[0].components.lasloader.data);
-            }
-
-           });
-      },
-      TriggerDown: function (evt) {
-        //console.log(evt);
-        //console.log(evt.srcElement);
-        let intersections = this.raycaster_intersections;
-        for(let i=0; i<intersections.length; i++){
-            //console.log(evt.detail.intersections[i].index, cls[evt.detail.intersections[i].index]);
-            ids.push(intersections[i].index);
-            clns.push(7);
+            
+            if(intersections.length > 0){
+                //console.log(ptcld.components.lasloader);
+                ptcld.components.lasloader.classify(ids,clns);
+                //ptcld.components.lasloader.update(ptcld.components.lasloader.data);
+            }    
         }
-        (this.raycaster_els)[0].components.lasloader.classify(ids,clns);
-      }
+    }
+
 
 });
