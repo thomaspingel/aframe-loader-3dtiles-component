@@ -151,27 +151,19 @@ AFRAME.registerComponent('lasloader', {
       console.log(this.classification);
     });
 
-    let downloadcsv = function()
-    {
-      // console.log(mesh_var.mesh)
-      // console.log(mesh_var.el)
+    //Function that takes care of download
+    function downloadcsv(){
       let pos_arr = mesh_var.geometry.getAttribute('position').array
-      // let col_arr = mesh_var.geometry.getAttribute('color').array
       let classification = mesh_var.geometry.getAttribute('classification').array
-
       let csv = []
       for (let i = 0; i < pos_arr.length; i = i + 3) {
         csv.push([pos_arr[i], pos_arr[i+1], pos_arr[i+2], classification[i/3]])
       }
       csv = arrayToCsv(csv)
       downloadBlob(csv, 'export.csv', 'text/csv;charset=utf-8;')
-
     }
-
+    // Set the downloadcsv function with the button
     var button = document.querySelector(this.data.downid);
-    // console.log("button found 2 -")
-    console.log(button)
-    button.style.cursor = "pointer";
     button.addEventListener('click', downloadcsv);
 
     if (THREE.Cache.enabled) {
@@ -244,9 +236,6 @@ AFRAME.registerComponent('lasloader', {
         }
       }
     }
-
-    //console.log("update");
-    //console.log(this.classification);
 
     // Create geometry.
     this.geometry = new BufferGeometry();
