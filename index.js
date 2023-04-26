@@ -49,7 +49,8 @@ AFRAME.registerComponent('lasloader', {
     cameraEl: { type: 'selector' },
     renderDistance: { type: 'number', default: 50 },
     pointcloudColoring: { type: 'string', default: 'white' },
-    pointcloudElevationRange: { type: 'array', default: ['0', '400'] }
+    pointcloudElevationRange: { type: 'array', default: ['0', '400'] },
+    classificationValue: {type: 'number', default: 6}
   },
   init: async function () {
 
@@ -101,6 +102,11 @@ AFRAME.registerComponent('lasloader', {
     // }
     this.classification = model.attributes.classification.value;
     this.colors = new Uint8Array(this.classification.length * 4).fill(0);
+
+      // temp code to make the 30's normal
+      for(let i=0;i<this.classification.length;i++){
+      this.classification[i] = this.classification[i] % 32;
+    }
 
     // translate the entire pointcloud so that the center of it is at 0,0,100 (good for viewing)
     for(let i =0; i< this.positions.length;i++){

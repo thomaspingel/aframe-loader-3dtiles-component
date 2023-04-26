@@ -1,71 +1,127 @@
-<head>
-  <title>My A-Frame Scene</title>
-  <!-- <script src="https://aframe.io/releases/1.3.0/aframe.min.js%22%3E</script> -->
-  <script src="aframe.min.js"></script>
-  <script src='https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/utils/WorkerPool.js%27%3E'></script>
-  <script src='https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/loaders/KTX2Loader.js%27%3E'></script>
-  <script src="./dist/aframe-loader-laz-component.js?v62"></script>
+<html>
+  <head>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+	  <script src="https://cdn.jsdelivr.net/npm/handy-work@3.1.9/build/handy-controls.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-blink-controls/dist/aframe-blink-controls.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-htmlmesh@2.0.1/build/aframe-html.min.js"></script> 
+    <script src="aframe-loader-laz-component.min.js"></script>
+    <script src="./classifier.js"></script>
+  </head>
+  <body>
+    <a-scene webxr="overlayElement:dom-overlay" cursor="rayOrigin: mouse" raycaster="objects: [html]; interval:100;" inspector="url: https://cdn.jsdelivr.net/gh/aframevr/aframe-inspector@master/dist/aframe-inspector.min.js">
+      
+	<a-assets>
+<!-- 			<a-mixin id="blink" blink-controls="collisionEntities: #ground;"></a-mixin> -->
+      <a-mixin id="blink" blink-controls="rotateOnTeleport:true;cameraRig: #cameraRig; teleportOrigin: #head; collisionEntities:#ground;"></a-mixin>
+    <a-mixin id="raycaster" raycaster="showLine: true; far: 100; lineColor: red; objects: [html], #pointcloud; interval:100;"></a-mixin>
+		</a-assets>
 
-  <script src="./classifier.js"></script>
-</head>
-
-<body>
-  <a-scene environment="preset: default"
-         background="color: #AAAAAA"
-         keyboard-shortcuts="enterVR: false;"
-         vr-mode-ui="enabled: true;"
-         download-button
-         stats>
-
-  <!-- CAMERA -->
-  <!-- <a-camera id="camera" camera-logger position="553837 4118282 624" rotation="-36 -256 0" > -->
-  <a-camera id="camera" position="0 2 0">
-
-    <a-entity id="download-buttonid" geometry="primitive: box" material="color: red" position="-3 1 -2.5"></a-entity>
-
-  </a-camera>
-
-  <!-- CONTROLS -->
+              <!-- CONTROLS -->
   <!--  -->
-  <a-entity oculus-touch-controls="hand: left" raycaster="objects: .collidable; showLine:true; near: 0.1; far:100 autoRefresh:false" trigger>
-    <!-- <a-sphere  id="sph" position="0 0 50" material="color:red" scale="0.2 0.2 0.2"></a-sphere> -->
-  </a-entity>
+<!--   <a-entity oculus-touch-controls="hand: left" raycaster="objects: .collidable; showLine:true; near: 0.1; far:100 autoRefresh:false" trigger> -->
+  <!-- <a-sphere  id="sph" position="0 0 50" material="color:red" scale="0.2 0.2 0.2"></a-sphere> -->
+<!--   </a-entity> -->
   <a-entity oculus-touch-controls="hand: right" trigger ></a-entity>
-  <a-entity cursor="rayOrigin:mouse objects:"></a-entity>
+      
+      
+    <a-entity id="cameraRig" spawn-in-circle="radius:3">
+			<!-- camera -->
+			<a-entity class="avatar-head" camera="near:0.01;" cursor="rayOrigin: mouse" look-controls="pointerLockEnabled: false" wasd-controls="acceleration:20;" position="0 1.65 0">
+<!--         <a-entity id="download-buttonid" geometry="primitive: box" material="color: red" position="-3 1 -2.5"></a-entity> -->
+        <a-entity
+          style="
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+          "
+          id="download-buttonid"
+          class="button"
+          position="-4 1.7 -2.5"
+          geometry="primitive: plane; width: 1; height: 0.3;"
+          material="color: #4cc3d9; shader: flat;"
+          text="value: Download Cloud - csv; color: white; align: center; width: 2;"
+          onmouseenter="this.setAttribute('scale', '1.1 1.1 1.1')"
+          onmouseleave="this.setAttribute('scale', '1 1 1')"></a-entity>
+        
+      </a-entity>
 
-  <!-- POINTCLOUD -->
+			<!-- Hand tracking -->
+			<a-entity handy-controls >
+
+				<!-- These also do teleportaion for Blink controls in VR -->
+				<!-- These are present for hand tracking but hands don't have joysticks so do nothing -->
+				<a-entity data-right="ray" mixin="blink raycaster" cursor trigger></a-entity>
+				<a-entity data-left="ray" mixin="blink raycaster" cursor trigger></a-entity>
+
+				<!-- markers to let us know the real location of the hands, you probably want to make them visible="false" or just make them empty <a-entities> -->
+				<a-entity id="left-no-magnet" data-left="grip" data-no-magnet radius="0.01">
+					<a-entity html="cursor:#cursor;html:#my-interface" position="-0.142 -0.0166 -0.02928" rotation="-80 90 0" scale="0.5 0.5 0.5"></a-entity>
+				</a-entity>
+				<a-entity id="right-no-magnet" data-right="grip" data-no-magnet radius="0.01"></a-entity>
+			</a-entity>
+		</a-entity> 
+      
+
+
 <a-entity
   id="pointcloud"
-  class="collidable"
   position="0 0 0"
-  rotation="0 0 0"
+  rotation="0 1 1"
   scale="1 1 1"
   classifier 
   lasloader="
-    url: 'nothing_for_now';
+    url: https://rawhitten.github.io/pdal.southwest.09242022.laz;
     downid: #download-buttonid;
     cameraEl: #camera;
     pointcloudColoring: classification; 
-    renderDistance: 15
     "
   >
 </a-entity>
-
-</a-scene>
-
-</body>
-
-<!-- CHANGING URL -->
-<!--http://rawhitten.github.io/chunk.laz
-https://rawhitten.github.io/pdal.southwest.09242022.laz;-->
-<!--https://rawhitten.github.io/tree.laz-->
+      
+      
+    </a-scene>
 
 
-<script>
+    
+    <div id="dom-overlay">
+      <section style="display: inline-block; background: white; color: #333333; border-radius: 1em; padding: 1em; margin:0;" id="my-interface">
+        
+        <fieldset style="border:0 none;border-top: 1px solid grey;">
+          <legend>Classification</legend>
+          <input onclick="handleRadio(this)" type="radio" id="class-unclassified" name="pc_class" value="0" checked><label for="class-unclassified"> Unclassified</label>
+          <input onclick="handleRadio(this)" type="radio" id="class-ground" name="pc_class" value="2" checked><label for="class-ground"> Ground</label>
+          <input onclick="handleRadio(this)" type="radio" id="class-vegetation" name="pc_class" value="3" checked><label for="class-veg"> Vegetation</label>
+          <input onclick="handleRadio(this)" type="radio" id="class-building" name="pc_class" value="6" checked><label for="class-veg"> Building</label>
+        </fieldset>
+        
+        <h2>Settings</h2>
+          <button onclick="AFRAME.scenes[0].exitVR()" style="display: block;">Exit Immersive</button>
+      </section>
+    </div>
+    
+    
+  </body>
+  
+  <script>
+  // console.log("Hello")
   const pointcloud = document.getElementById("pointcloud");
+  // console.log("pt -")
+  // console.log(pointcloud)
   console.log(window.location.search)
   var url = new URL(window.location.href);
   var PTlink = url.searchParams.get("link");
-  pointcloud.setAttribute('lasloader', {url: PTlink});
-</script>
-
+  console.log("Link for redirection:")
+  console.log(PTlink)
+    if(PTlink != null){
+      pointcloud.setAttribute('lasloader', {url: PTlink});
+    }
+  function handleRadio(data){
+    console.log(data)
+    console.log(data.attributes.value.value);
+    console.log(document.getElementById("pointcloud").components.lasloader);
+    document.getElementById("pointcloud").setAttribute("lasloader", "classificationValue", data.attributes.value.value);
+    console.log(document.getElementById("pointcloud").components.lasloader.data.classificationValue);
+  }
+//     url: https://rawhitten.github.io/chunk.laz;
+  </script>
+  
+</html>
