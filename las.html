@@ -1,33 +1,30 @@
 <html>
+<!--    Scripts to be inmported-->
   <head>
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-	  <script src="https://cdn.jsdelivr.net/npm/handy-work@3.1.9/build/handy-controls.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/handy-work@3.1.9/build/handy-controls.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aframe-blink-controls/dist/aframe-blink-controls.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aframe-htmlmesh@2.0.1/build/aframe-html.min.js"></script> 
-    <script src="aframe-loader-laz-component.min.js"></script>
+    <script src="./dist/aframe-loader-laz-component.min.js"></script>
     <script src="./classifier.js"></script>
   </head>
+
   <body>
     <a-scene webxr="overlayElement:dom-overlay" cursor="rayOrigin: mouse" raycaster="objects: [html]; interval:100;" inspector="url: https://cdn.jsdelivr.net/gh/aframevr/aframe-inspector@master/dist/aframe-inspector.min.js">
-      
-	<a-assets>
-<!-- 			<a-mixin id="blink" blink-controls="collisionEntities: #ground;"></a-mixin> -->
-      <a-mixin id="blink" blink-controls="rotateOnTeleport:true;cameraRig: #cameraRig; teleportOrigin: #head; collisionEntities:#ground;"></a-mixin>
-    <a-mixin id="raycaster" raycaster="showLine: true; far: 100; lineColor: red; objects: [html], #pointcloud; interval:100;"></a-mixin>
-		</a-assets>
+        <a-assets>
+    <!-- 			<a-mixin id="blink" blink-controls="collisionEntities: #ground;"></a-mixin> -->
+            <a-mixin id="blink" blink-controls="rotateOnTeleport:true;cameraRig: #cameraRig; teleportOrigin: #head; collisionEntities:#ground;"></a-mixin>
+            <a-mixin id="raycaster" raycaster="showLine: true; far: 100; lineColor: red; objects: [html], #pointcloud; interval:100;"></a-mixin>
+        </a-assets>
 
-              <!-- CONTROLS -->
-  <!--  -->
-<!--   <a-entity oculus-touch-controls="hand: left" raycaster="objects: .collidable; showLine:true; near: 0.1; far:100 autoRefresh:false" trigger> -->
-  <!-- <a-sphere  id="sph" position="0 0 50" material="color:red" scale="0.2 0.2 0.2"></a-sphere> -->
-<!--   </a-entity> -->
+  <!-- CONTROLS -->
+  <a-entity oculus-touch-controls="hand: left" raycaster="objects: .collidable; showLine:true; near: 0.1; far:100" trigger></a-entity>
   <a-entity oculus-touch-controls="hand: right" trigger ></a-entity>
-      
-      
+
+        <!-- camera -->
     <a-entity id="cameraRig" spawn-in-circle="radius:3">
-			<!-- camera -->
 			<a-entity class="avatar-head" camera="near:0.01;" cursor="rayOrigin: mouse" look-controls="pointerLockEnabled: false" wasd-controls="acceleration:20;" position="0 1.65 0">
-<!--         <a-entity id="download-buttonid" geometry="primitive: box" material="color: red" position="-3 1 -2.5"></a-entity> -->
+        <!--Download Button -->
         <a-entity
           style="
             cursor: pointer;
@@ -41,17 +38,14 @@
           text="value: Download Cloud - csv; color: white; align: center; width: 2;"
           onmouseenter="this.setAttribute('scale', '1.1 1.1 1.1')"
           onmouseleave="this.setAttribute('scale', '1 1 1')"></a-entity>
-        
       </a-entity>
 
 			<!-- Hand tracking -->
 			<a-entity handy-controls >
-
 				<!-- These also do teleportaion for Blink controls in VR -->
 				<!-- These are present for hand tracking but hands don't have joysticks so do nothing -->
 				<a-entity data-right="ray" mixin="blink raycaster" cursor trigger></a-entity>
 				<a-entity data-left="ray" mixin="blink raycaster" cursor trigger></a-entity>
-
 				<!-- markers to let us know the real location of the hands, you probably want to make them visible="false" or just make them empty <a-entities> -->
 				<a-entity id="left-no-magnet" data-left="grip" data-no-magnet radius="0.01">
 					<a-entity html="cursor:#cursor;html:#my-interface" position="-0.142 -0.0166 -0.02928" rotation="-80 90 0" scale="0.5 0.5 0.5"></a-entity>
@@ -60,8 +54,7 @@
 			</a-entity>
 		</a-entity> 
       
-
-
+<!--Pointcloud -->
 <a-entity
   id="pointcloud"
   position="0 0 0"
@@ -72,16 +65,14 @@
     url: https://rawhitten.github.io/pdal.southwest.09242022.laz;
     downid: #download-buttonid;
     cameraEl: #camera;
-    pointcloudColoring: classification; 
-    "
-  >
+    pointcloudColoring: classification;">
 </a-entity>
-      
-      
-    </a-scene>
 
 
-    
+</a-scene>
+
+
+<!--    Menu for the left hand-->
     <div id="dom-overlay">
       <section style="display: inline-block; background: white; color: #333333; border-radius: 1em; padding: 1em; margin:0;" id="my-interface">
         
@@ -102,10 +93,8 @@
   </body>
   
   <script>
-  // console.log("Hello")
+  // This part of code deals with taking link from url and visualising it
   const pointcloud = document.getElementById("pointcloud");
-  // console.log("pt -")
-  // console.log(pointcloud)
   console.log(window.location.search)
   var url = new URL(window.location.href);
   var PTlink = url.searchParams.get("link");
@@ -114,6 +103,8 @@
     if(PTlink != null){
       pointcloud.setAttribute('lasloader', {url: PTlink});
     }
+
+  // Handles the change in classification on menu side
   function handleRadio(data){
     console.log(data)
     console.log(data.attributes.value.value);
