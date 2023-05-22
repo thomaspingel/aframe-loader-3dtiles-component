@@ -48,6 +48,7 @@ AFRAME.registerComponent('lasloader', {
     downid: { type: 'string' },
     cameraEl: { type: 'selector' },
     renderDistance: { type: 'number', default: 50 },
+    rotation: {type: 'number', default: Math.PI/2},
     pointcloudColoring: { type: 'string', default: 'white' },
     pointcloudElevationRange: { type: 'array', default: ['0', '400'] },
     classificationValue: {type: 'number', default: 6}
@@ -119,6 +120,8 @@ AFRAME.registerComponent('lasloader', {
       }
     }
 
+ 
+
     // Set colors to classification based on standard color scheme
     for(let i = 0; i < this.classification.length; i++){
       if(this.classification[i] >13){
@@ -133,23 +136,24 @@ AFRAME.registerComponent('lasloader', {
       }
     }
 
-    // itemSize = 3 because there are 3 values (components) per vertex
-    this.geometry.setAttribute( 'position', new THREE.BufferAttribute(this.positions,3) );
-    this.geometry.setAttribute( 'color', new THREE.BufferAttribute(this.colors,4) );
-    this.geometry.attributes.color.normalized = true;
-    this.geometry.setAttribute( 'classification', new THREE.BufferAttribute(this.classification,1) );
-    // Create material.
-    this.material = new THREE.PointsMaterial({size:1, vertexColors: true});
+    this.geometry.rotateX(rotation.x * (Math.PI/180));
+    // // itemSize = 3 because there are 3 values (components) per vertex
+    // this.geometry.setAttribute( 'position', new THREE.BufferAttribute(this.positions,3) );
+    // this.geometry.setAttribute( 'color', new THREE.BufferAttribute(this.colors,4) );
+    // this.geometry.attributes.color.normalized = true;
+    // this.geometry.setAttribute( 'classification', new THREE.BufferAttribute(this.classification,1) );
+    // // Create material.
+    // this.material = new THREE.PointsMaterial({size:1, vertexColors: true});
 
-    // Create mesh.
-    this.mesh = new THREE.Points(this.geometry, this.material);
-    let mesh_var = this;
-    // Set mesh on entity.
-    this.el.setObject3D('mesh', this.mesh);
-    this.el.sceneEl.addEventListener('loaded', function(){
-      console.log("loaded");
-      console.log(this.classification);
-    });
+    // // Create mesh.
+    // this.mesh = new THREE.Points(this.geometry, this.material);
+    // let mesh_var = this;
+    // // Set mesh on entity.
+    // this.el.setObject3D('mesh', this.mesh);
+    // this.el.sceneEl.addEventListener('loaded', function(){
+    //   console.log("loaded");
+    //   console.log(this.classification);
+    // });
 
     let downloadcsv = function()
     {
@@ -200,7 +204,8 @@ AFRAME.registerComponent('lasloader', {
     }
   },
   update: async function (oldData) {
-
+    console.log(this.el.components.position.attrValue);
+    const center = this.el.components.position.attrValue;
     if (oldData.url !== this.data.url) {
       console.log("reloading pointcloud to new url", this.data.url);
       if (this.runtime) {
@@ -217,6 +222,8 @@ AFRAME.registerComponent('lasloader', {
         (model.header.boundingBox[0][1]+model.header.boundingBox[1][1])/2,
         (model.header.boundingBox[0][2]+model.header.boundingBox[1][2])/2,
       ]
+
+      
       console.log(this.center);
 
       this.geometry = new BufferGeometry();
@@ -238,13 +245,26 @@ AFRAME.registerComponent('lasloader', {
         }else if(i%3==1){
           this.positions[i]-=this.center[1];
         }else{
-
-          this.positions[i]-=this.center[2]+this.renderDistance;
-
+          this.positions[i]-=this.center[2];
         }
       }
     }
 
+
+    // let xRot = this.data.rotation * (Math.PI/180);
+    // let xcos = Math.cos(xRot);
+    // let xsin = Math.sin(xRot);
+    // console.log(xcos+", "+xsin+", "+xRot);
+    
+    // let y,z,z0,y0;
+    // for(let i=0; i<this.positions.length;i+=3){
+    //     y0=this.positions[i+1];
+    //     z0=this.positions[i+2];
+    //     this.positions[i+1]= ((z0-center[2])*xcos)+((y0-center[1])*xsin)-center[1]-55;
+    //     this.positions[i+2]= ((z0-center[2])*xsin)+((y0-center[1])*xcos)+center[2];
+        
+    // }
+  
     //console.log("update");
     //console.log(this.classification);
 
@@ -280,6 +300,7 @@ AFRAME.registerComponent('lasloader', {
 
     this.geometry.setAttribute( 'classification', new THREE.BufferAttribute(this.classification,1) );
 
+   
     // Create material.
     this.material = new THREE.PointsMaterial({size:1, vertexColors: true});
 
@@ -288,6 +309,10 @@ AFRAME.registerComponent('lasloader', {
 
     // Set mesh on entity.
     this.el.setObject3D('mesh', this.mesh);
+    //this.geometry.rotateY(Math.PI);
+    const rotation = this.el.components.rotation.attrValue;
+    console.log(rotation);
+    
   },
   _resolvePointcloudColoring () {
     const pointCloudColoring = POINT_CLOUD_COLORING[this.data.pointcloudColoring];

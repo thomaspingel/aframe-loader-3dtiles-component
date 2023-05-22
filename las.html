@@ -4,7 +4,7 @@
 	  <script src="https://cdn.jsdelivr.net/npm/handy-work@3.1.9/build/handy-controls.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aframe-blink-controls/dist/aframe-blink-controls.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aframe-htmlmesh@2.0.1/build/aframe-html.min.js"></script> 
-    <script src="aframe-loader-laz-component.min.js"></script>
+    <script src="dist/aframe-loader-laz-component.js"></script>
     <script src="./classifier.js"></script>
   </head>
   <body>
@@ -19,14 +19,14 @@
               <!-- CONTROLS -->
   <!--  -->
 <!--   <a-entity oculus-touch-controls="hand: left" raycaster="objects: .collidable; showLine:true; near: 0.1; far:100 autoRefresh:false" trigger> -->
-  <!-- <a-sphere  id="sph" position="0 0 50" material="color:red" scale="0.2 0.2 0.2"></a-sphere> -->
+  
 <!--   </a-entity> -->
   <a-entity oculus-touch-controls="hand: right" trigger ></a-entity>
       
       
     <a-entity id="cameraRig" spawn-in-circle="radius:3">
 			<!-- camera -->
-			<a-entity class="avatar-head" camera="near:0.01;" cursor="rayOrigin: mouse" look-controls="pointerLockEnabled: false" wasd-controls="acceleration:20;" position="0 1.65 0">
+			<a-entity class="avatar-head" camera="near:0.01;" cursor="rayOrigin: mouse" look-controls="pointerLockEnabled: false" wasd-controls="acceleration:150;" position="0 1.65 0">
 <!--         <a-entity id="download-buttonid" geometry="primitive: box" material="color: red" position="-3 1 -2.5"></a-entity> -->
         <a-entity
           style="
@@ -49,8 +49,8 @@
 
 				<!-- These also do teleportaion for Blink controls in VR -->
 				<!-- These are present for hand tracking but hands don't have joysticks so do nothing -->
-				<a-entity data-right="ray" mixin="blink raycaster" cursor trigger></a-entity>
-				<a-entity data-left="ray" mixin="blink raycaster" cursor trigger></a-entity>
+				<a-entity id="lefthand" data-right="ray" mixin="blink raycaster" cursor trigger></a-entity>
+				<a-entity id="righthand" data-left="ray" mixin="blink raycaster" cursor trigger></a-entity>
 
 				<!-- markers to let us know the real location of the hands, you probably want to make them visible="false" or just make them empty <a-entities> -->
 				<a-entity id="left-no-magnet" data-left="grip" data-no-magnet radius="0.01">
@@ -60,12 +60,13 @@
 			</a-entity>
 		</a-entity> 
       
-
+  
+    <!-- <a-sphere  id="sph" position="0 0 -50" material="color:red" scale="0.8 0.8 0.8"></a-sphere> -->
 
 <a-entity
   id="pointcloud"
-  position="0 0 0"
-  rotation="0 1 1"
+  position="0 0 -50"
+  rotation="270 0 0"
   scale="1 1 1"
   classifier 
   lasloader="
@@ -73,10 +74,11 @@
     downid: #download-buttonid;
     cameraEl: #camera;
     pointcloudColoring: classification; 
-    "
+    rotation: 270;
+  "
   >
 </a-entity>
-      
+
       
     </a-scene>
 
@@ -108,7 +110,7 @@
   // console.log(pointcloud)
   console.log(window.location.search)
   var url = new URL(window.location.href);
-  var PTlink = url.searchParams.get("link");
+  var PTlink = url.searchParams.get("url");
   console.log("Link for redirection:")
   console.log(PTlink)
     if(PTlink != null){
@@ -121,6 +123,8 @@
     document.getElementById("pointcloud").setAttribute("lasloader", "classificationValue", data.attributes.value.value);
     console.log(document.getElementById("pointcloud").components.lasloader.data.classificationValue);
   }
+  console.log("left hand position: ");
+  console.log(document.getElementById("lefthand").object3D.position);
 //     url: https://rawhitten.github.io/chunk.laz;
   </script>
   

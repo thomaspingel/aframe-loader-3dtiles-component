@@ -59,17 +59,22 @@ AFRAME.registerComponent('trigger', {
 
     tick: function(time, timeDelta){
         //console.log(timeDelta);
+        //console.log(this.el.object3D.position);
+        
         this.el.components.raycaster.refreshObjects();
         //console.log(this.el.components.raycaster.intersections);
         //console.log(this.paint);
         //console.log("paint");
         if(this.paint){
+            
           console.log('painting');
             let ids = [];
             let clns = [];
             let intersections = this.el.components.raycaster.intersections;
-            console.log(intersections);
+            
             let ptcld = document.querySelector("#pointcloud");
+            console.log(ptcld.object3D.rotation);
+            //ptcld.object3D.rotation.z+=0.01;
             //this.raycaster_intersections = this.el.components.raycaster.intersections;
             //this.raycaster_els = this.els;
             for(let i=0; i<intersections.length; i++){
