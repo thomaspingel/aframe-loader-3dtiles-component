@@ -50,10 +50,13 @@ The following example sets up a basic scene with a RealityCapture photogrammetry
         position="0 2.6 0"
         rotation="-90 180 0"
         scale="2 2 2"
-        loader-3dtiles="
-         url: https://int.nyt.com/data/3dscenes/ONA360/TILESET/0731_FREEMAN_ALLEY_10M_A_36x8K__10K-PN_50P_DB/tileset_tileset.json; 
-         maximumSSE: 48;
-         cameraEl: #camera;
+        lasloader="
+          url: https://rawhitten.github.io/pdal.southwest.09242022.laz;
+          downid: #download-buttonid;
+          cameraEl: #camera;
+          lefthandEl: #lefthand;
+          righthandEl: #righthand;
+          pointcloudColoring: classification; 
         "
       >
       </a-entity>

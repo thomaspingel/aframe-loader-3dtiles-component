@@ -33,8 +33,6 @@ function downloadBlob(content, filename, contentType) {
   pom.click();
 }
 
-
-
 const POINT_CLOUD_COLORING = {
   white: PointCloudColoring.White,
   intensity: PointCloudColoring.Intensity,
@@ -47,14 +45,24 @@ AFRAME.registerComponent('lasloader', {
     url: { type: 'string' },
     downid: { type: 'string' },
     cameraEl: { type: 'selector' },
-    renderDistance: { type: 'number', default: 50 },
-    rotation: {type: 'number', default: Math.PI/2},
+    renderDistance: { type: 'number', default: 50 }, //distance that the pointcloud is rendered initially from the camera
+    lefthandEl: {type: 'string', default: null}, //id of left hand controller
+    righthandEl: {type: 'string', default: null}, //id of right hand controller
     pointcloudColoring: { type: 'string', default: 'white' },
     pointcloudElevationRange: { type: 'array', default: ['0', '400'] },
-    classificationValue: {type: 'number', default: 6}
+    classificationValue: {type: 'number', default: 6},
+    pointSize: {type: 'number', default: 1}
   },
   init: async function () {
-
+    this.rotation = this.el.components.rotation.attrValue;
+    this.el.addEventListener('abuttondown', this.reset);
+    this.el.addEventListener('click', this.reset);
+    if(this.data.lefthandEl == null || this.data.righthandEl==null){
+      console.log("ERROR: must specify lefthandid and righthandid in lasloader properties.");
+    }
+    this.righthand = document.querySelector(this.data.righthandEl);
+    this.lefthand = document.querySelector(this.data.lefthandEl);
+    console.log(this.righthand.object3D.position);
     /**
      * Standard Classification Colors
      * source: https://www.researchgate.net/figure/Colors-used-to-represent-LAS-classification-codes-in-PDQ_fig2_283413311
@@ -96,12 +104,14 @@ AFRAME.registerComponent('lasloader', {
     this.geometry = new BufferGeometry();
 
     this.positions = model.attributes.POSITION.value;
+    
+    this.classification = model.attributes.classification.value;
+
     // if(model.attributes.keys.includes("COLOR_0") ){
     //   this.colors = model.attributes.COLOR_0.value;
     // } else {
       
     // }
-    this.classification = model.attributes.classification.value;
     this.colors = new Uint8Array(this.classification.length * 4).fill(0);
 
       // temp code to make the 30's normal
@@ -136,24 +146,15 @@ AFRAME.registerComponent('lasloader', {
       }
     }
 
-    this.geometry.rotateX(rotation.x * (Math.PI/180));
-    // // itemSize = 3 because there are 3 values (components) per vertex
-    // this.geometry.setAttribute( 'position', new THREE.BufferAttribute(this.positions,3) );
-    // this.geometry.setAttribute( 'color', new THREE.BufferAttribute(this.colors,4) );
-    // this.geometry.attributes.color.normalized = true;
-    // this.geometry.setAttribute( 'classification', new THREE.BufferAttribute(this.classification,1) );
-    // // Create material.
-    // this.material = new THREE.PointsMaterial({size:1, vertexColors: true});
-
-    // // Create mesh.
-    // this.mesh = new THREE.Points(this.geometry, this.material);
-    // let mesh_var = this;
-    // // Set mesh on entity.
-    // this.el.setObject3D('mesh', this.mesh);
-    // this.el.sceneEl.addEventListener('loaded', function(){
-    //   console.log("loaded");
-    //   console.log(this.classification);
-    // });
+    /**
+     * Rotate the pointcloud based on rotation parameter in a-entity in degrees.
+     * Uses three.js BufferGeometry rotation functions which take radians
+     */
+    
+    console.log(this.rotation);    
+    this.geometry.rotateX(this.rotation.x * (Math.PI/180));
+    this.geometry.rotateY(this.rotation.y * (Math.PI/180));
+    this.geometry.rotateZ(this.rotation.z * (Math.PI/180));
 
     let downloadcsv = function()
     {
@@ -184,7 +185,9 @@ AFRAME.registerComponent('lasloader', {
     }
 
     // Sleep 18sec? idk if this is necessary anymore
-    await new Promise(r => setTimeout(r, 18000));
+    //await new Promise(r => setTimeout(r, 18000));
+    
+    
    },
 
   /**
@@ -203,6 +206,17 @@ AFRAME.registerComponent('lasloader', {
       this.update(this.data);
     }
   },
+  reset: function(evt){
+    console.log('reset');
+    evt.srcElement.object3D.position = new Vector3(this.el.components.position.attrValue.x, this.el.components.position.attrValue.y, this.el.components.position.attrValue.z);
+    evt.srcElement.object3D.rotation = new Vector3(this.el.components.rotation.attrValue.x, this.el.components.rotation.attrValue.y, this.el.components.rotation.attrValue.z);
+    evt.srcElement.object3D.scale = new Vector3(this.el.components.scale.attrValue.x, this.el.components.scale.attrValue.y, this.el.components.scale.attrValue.z);
+  },
+/**
+ * This is where the geometry and mesh of the pointcloud are loaded and 
+ * rendered.
+ * @param {*} oldData 
+ */
   update: async function (oldData) {
     console.log(this.el.components.position.attrValue);
     const center = this.el.components.position.attrValue;
@@ -226,19 +240,35 @@ AFRAME.registerComponent('lasloader', {
       
       console.log(this.center);
 
+      /*
+      * The base object for the pointcloud geometry
+      */
       this.geometry = new BufferGeometry();
 
+      // loaded position values from the laz file
+      // -- one large array of every x, y, z, x, y, z ...
+      // -- ergo it has a length of 3n for n points
       this.positions = model.attributes.POSITION.value;
 
-      console.log(model.attributes.keys);
-      // if(model.attributes.hasAttribute("COLOR_0") ){
-      //   this.colors = model.attributes.COLOR_0.value;
-      // }
+      // loaded classification values from the laz file
+      // -- this is one large array of every classification value one by one
+      // -- has a length of n for n points
       this.classification = model.attributes.classification.value;
+
+      // an empty array to hold the rgb colors that will be displayed
+      // -- if we are displaying classification we need to set the colors ourselves
+      // -- one large array of r, g, b, a
+      // -- so length of 4n for n points
       this.colors = new Uint8Array(this.classification.length * 4).fill(255);
 
+      // if(model.attributes.keys.includes("COLOR_0") ){
+      //   this.colors = model.attributes.COLOR_0.value;
+      // } else {
+        
+      // }
 
       // translate the entire pointcloud so that the center of it is at 0,0,100 (good for viewing)
+      // TODO: can accomplish this better using threejs geometry translate()
       for(let i =0; i< this.positions.length;i++){
         if(i%3==0){
           this.positions[i]-=this.center[0];
@@ -250,28 +280,13 @@ AFRAME.registerComponent('lasloader', {
       }
     }
 
-
-    // let xRot = this.data.rotation * (Math.PI/180);
-    // let xcos = Math.cos(xRot);
-    // let xsin = Math.sin(xRot);
-    // console.log(xcos+", "+xsin+", "+xRot);
-    
-    // let y,z,z0,y0;
-    // for(let i=0; i<this.positions.length;i+=3){
-    //     y0=this.positions[i+1];
-    //     z0=this.positions[i+2];
-    //     this.positions[i+1]= ((z0-center[2])*xcos)+((y0-center[1])*xsin)-center[1]-55;
-    //     this.positions[i+2]= ((z0-center[2])*xsin)+((y0-center[1])*xcos)+center[2];
-        
-    // }
-  
-    //console.log("update");
-    //console.log(this.classification);
-
-    // Create geometry.
-    this.geometry = new BufferGeometry();
-
     // temp code to make the 30's normal
+    // -- Sometimes the classification values load as like 38 instead of 6 and so on
+    // -- so this makes sure they are correct.
+    // -- TODO: we are still not sure exactly what is causing this, though
+    //    it is probably something to do with bit lengths of the data,
+    //    like if each value is 5 bits and it is reading 6, but this is
+    //    unconfirmed and unsolved atm 
     for(let i=0;i<this.classification.length;i++){
       this.classification[i] = this.classification[i] % 32;
     }
@@ -302,7 +317,8 @@ AFRAME.registerComponent('lasloader', {
 
    
     // Create material.
-    this.material = new THREE.PointsMaterial({size:1, vertexColors: true});
+    // vertexColors: true makes the colors be dictated by the color array we provide
+    this.material = new THREE.PointsMaterial({size:this.data.pointSize, vertexColors: true});
 
     // Create mesh.
     this.mesh = new THREE.Points(this.geometry, this.material);
@@ -310,9 +326,64 @@ AFRAME.registerComponent('lasloader', {
     // Set mesh on entity.
     this.el.setObject3D('mesh', this.mesh);
     //this.geometry.rotateY(Math.PI);
-    const rotation = this.el.components.rotation.attrValue;
-    console.log(rotation);
     
+  },
+  tick: function(time, timeDelta) {
+    
+    // This is all handling the controller transformations
+    if(this.r != null && this.geometry!=null){
+      this.r1=new Vector3(this.righthand.object3D.position.x, this.righthand.object3D.position.y, this.righthand.object3D.position.z);
+      this.l1=new Vector3(this.lefthand.object3D.position.x, this.lefthand.object3D.position.y, this.lefthand.object3D.position.z);
+      
+      // current distance vector between right and left hands
+      this.distv1 = this.r1.clone().sub(this.l1);
+
+      // find x, y, z angles between distance vectors (distv, distv1)
+        // find 2d projections of each vector first
+        this.distv1xy = new Vector3(this.distv1.x, this.distv1.y, 0).normalize();
+        this.distv1xz = new Vector3(this.distv1.x, 0, this.distv1.z).normalize();
+        this.distv1yz = new Vector3(0, this.distv1.y, this.distv1.z).normalize();
+        this.distvxy = new Vector3(this.distv.x, this.distv.y, 0).normalize();
+        this.distvxz = new Vector3(this.distv.x, 0, this.distv.z).normalize();
+        this.distvyz = new Vector3(0, this.distv.y, this.distv.z).normalize();
+        let rotScale = 0.3;
+        // find angle components between the two vectors
+        this.dx = rotScale*(Math.atan2(this.distv.y, this.distv.z)-Math.atan2(this.distv1.y, this.distv1.z));
+        this.dy = rotScale*(Math.atan2(this.distv.x, this.distv.z)-Math.atan2(this.distv1.x, this.distv1.z));
+        this.dz = rotScale*(Math.atan2(this.distv.x, this.distv.y)-Math.atan2(this.distv1.x, this.distv1.y));
+
+        console.log(this.dx+" "+this.dy+" "+this.dz);
+        //console.log(this.dx+" "+this.dy+" "+this.dz);
+
+      this.dist1 = this.r1.clone().distanceTo(this.l1);
+      this.dr = this.r1.clone().sub(this.r);
+      this.dl = this.l1.clone().sub(this.l);
+      this.ddist = this.dist1 - this.dist;
+      this.midpoint1 = this.r1.clone().lerp(this.l1, 0.5);    
+      this.dmidpoint = this.midpoint1.clone().sub(this.midpoint);
+      this.da = this.a1 - this.a;
+      let scale = 0.5;
+      let distScale = 15;
+
+      //this.el.object3D.scale.multiplyScalar((this.ddist*scale)+1);
+      //console.log(this.ddist+" "+((this.ddist*scale)+1));
+      
+      //this.el.object3D.position.addScaledVector(this.dmidpoint, distScale); 
+      // this.rot = this.dr.clone().cross(this.dl).multiplyScalar(this.da); 
+      //this.el.object3D.rotation.x-=this.dx%(Math.PI/4);
+      //this.el.object3D.rotation.y-=this.dy%(Math.PI/4);
+      this.el.object3D.rotation.z+=this.dz;
+      // console.log(this.rot);
+    }
+    this.r = new Vector3(this.righthand.object3D.position.x, this.righthand.object3D.position.y, this.righthand.object3D.position.z);
+    this.l = new Vector3(this.lefthand.object3D.position.x, this.lefthand.object3D.position.y, this.lefthand.object3D.position.z);   
+    this.a = this.r.angleTo(this.l);
+    this.midpoint = this.r.clone().lerp(this.l, 0.5);
+    this.dist = this.r.clone().distanceTo(this.l);
+
+    // previous distance vector between right and left hands
+    this.distv = this.r.clone().sub(this.l);
+    //console.log(this.midpoint);
   },
   _resolvePointcloudColoring () {
     const pointCloudColoring = POINT_CLOUD_COLORING[this.data.pointcloudColoring];
