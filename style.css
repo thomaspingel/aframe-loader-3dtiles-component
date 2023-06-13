@@ -20,6 +20,7 @@
     width: auto;
     height: auto;
     background-color:white;
+    padding-bottom: 50px;
   }
   .classbtn{
      -webkit-appearance: button;
@@ -70,6 +71,7 @@
     grid-column-end: 3;
     grid-row-start: 2;
     grid-row-end: 4;
+    padding-bottom:150px;
   }
   .color {
     font-size:30px;

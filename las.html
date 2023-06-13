@@ -95,7 +95,7 @@
     cameraEl: #camera;
     lefthandEl: #lefthand;
     righthandEl: #righthand;
-    pointcloudColoring: classification; 
+    pointcloudColoring: rgb; 
   "
   >
   </a-entity>
@@ -279,13 +279,13 @@
           </h2>
           
           <button  class="color">
-          <input type="radio" name="coloring" class="radio"/>
+          <input type="radio" name="coloring" class="radio" value="classification" onclick="changeColoring(this.value)"/>
             <br>
             Classification
           </button>
           <br>
           <button  class="color">
-          <input type="radio" name="coloring" class="radio"/>
+          <input type="radio" name="coloring" class="radio" value="rgb" onclick="changeColoring(this.value)"/>
             <br>
             RGB
           </button>
@@ -440,6 +440,15 @@
       );
       
     }
+
+    function changeColoring(value){
+      //console.log("\'"+value+"\'");
+     // console.log(typeof(value));
+      console.log(("\'"+value+"\'").replace("\'","").replace("\'",""));
+      //document.getElementById("pointcloud").setAttribute("lasloader","pointcloudColoring", "classification");
+      document.getElementById("pointcloud").setAttribute("lasloader","pointcloudColoring", "\'"+value+"\'");
+    }
+
     console.log("left hand position: ");
     console.log(document.getElementById("lefthand").object3D.position);
 

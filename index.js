@@ -40,6 +40,7 @@ const POINT_CLOUD_COLORING = {
   elevation: PointCloudColoring.Elevation,
   rgb: PointCloudColoring.RGB
 };
+
 AFRAME.registerComponent('lasloader', {
   schema: {
     url: { type: 'string' },
@@ -48,7 +49,7 @@ AFRAME.registerComponent('lasloader', {
     renderDistance: { type: 'number', default: 50 }, //distance that the pointcloud is rendered initially from the camera
     lefthandEl: {type: 'string', default: null}, //id of left hand controller
     righthandEl: {type: 'string', default: null}, //id of right hand controller
-    pointcloudColoring: { type: 'string', default: 'white' },
+    pointcloudColoring: { type: 'string', default: "white" },
     pointcloudElevationRange: { type: 'array', default: ['0', '400'] },
     classificationValue: {type: 'number', default: 6},
     pointSize: {type: 'number', default: 1}
@@ -107,17 +108,23 @@ AFRAME.registerComponent('lasloader', {
     
     this.classification = model.attributes.classification.value;
 
-    // if(model.attributes.keys.includes("COLOR_0") ){
-    //   this.colors = model.attributes.COLOR_0.value;
-    // } else {
-      
-    // }
+    // if there are RGB values, save in this.rgb
+    //    one long array of r, g, b, a for each point
+    //    length 4n for n points
+    //if(model.attributes.keys.includes("COLOR_0") ){
+      this.rgb = model.attributes.COLOR_0.value;
+    //} else {
+      // if there is no rgb data, display as black
+      //this.rgb = new Uint8Array(this.classification.length * 4).fill(0);
+    //}
+
+    // the colors to display the point cloud as depending on coloring selected
     this.colors = new Uint8Array(this.classification.length * 4).fill(0);
 
-      // temp code to make the 30's normal
-      for(let i=0;i<this.classification.length;i++){
-      this.classification[i] = this.classification[i] % 32;
-    }
+    // temp code to make the 30's normal
+    // for(let i=0;i<this.classification.length;i++){
+    //   this.classification[i] = this.classification[i] % 32;
+    // }
 
     // translate the entire pointcloud so that the center of it is at 0,0,100 (good for viewing)
     for(let i =0; i< this.positions.length;i++){
@@ -291,19 +298,67 @@ AFRAME.registerComponent('lasloader', {
       this.classification[i] = this.classification[i] % 32;
     }
 
-    // Set colors to classification based on standard color scheme defined in this.classificationColors
-    for(let i = 0; i < this.classification.length; i++){
-      if(this.classification[i] >13){
-        //console.log(i+" "+ this.classification[i]);
-        this.colors[i*4] = 237;
-        this.colors[(i*4) + 1] = 143;
-        this.colors[(i*4) + 2] = 2;
-      } else {
-        this.colors[i*4] = this.classificationColors[(this.classification)[i]][0];
-        this.colors[(i*4) + 1] = this.classificationColors[this.classification[i]][1];
-        this.colors[(i*4) + 2] = this.classificationColors[this.classification[i]][2];
+    let pcoloring = this._resolvePointcloudColoring(this.data.pointCloudColoring);
+    console.log(pcoloring);
+    // switch (pcoloring) {
+    //   case (POINT_CLOUD_COLORING.classification):
+        
+    //     break;
+    //   case (POINT_CLOUD_COLORING.rgb):
+    //     console.log("rgb");
+    //     this.colors = this.rgb;
+    //     console.log(this.rgb);
+    //     console.log(this.colors);
+    //     break;
+    //   case (POINT_CLOUD_COLORING.white):
+    //     this.colors = new Uint8Array(this.classification.length * 4).fill(255);
+    //     break;
+    //   case (POINT_CLOUD_COLORING.elevation):
+    //     //TODO:
+    //     console.log("ERROR: elevation coloring not implemented yet");
+    //     break;
+    //   case (POINT_CLOUD_COLORING.intensity):
+    //     //TODO:
+    //     console.log("ERROR: intensity coloring not implemented yet");
+    //     break;
+    //   default:
+    //     console.log("ERROR: bad coloring given");
+    // }
+    
+    if (pcoloring == POINT_CLOUD_COLORING.classification){
+      console.log("coloring as CLASSIFICATION");
+      // Set colors to classification based on standard color scheme defined in this.classificationColors
+      for(let i = 0; i < this.classification.length; i++){
+        if(this.classification[i] >13){
+          //console.log(i+" "+ this.classification[i]);
+          this.colors[i*4] = 237;
+          this.colors[(i*4) + 1] = 143;
+          this.colors[(i*4) + 2] = 2;
+        } else {
+          this.colors[i*4] = this.classificationColors[(this.classification)[i]][0];
+          this.colors[(i*4) + 1] = this.classificationColors[this.classification[i]][1];
+          this.colors[(i*4) + 2] = this.classificationColors[this.classification[i]][2];
+        }
       }
+    } else if (pcoloring == POINT_CLOUD_COLORING.rgb) {
+      console.log("coloring as RGB");
+      console.log(this.rgb);
+      if(this.rgb){
+        this.colors = (this.rgb).map(function(x){return x});
+      }
+      
+      console.log(this.colors);
+    } else if (pcoloring == POINT_CLOUD_COLORING.white) {
+      this.colors = new Uint8Array(this.classification.length * 4).fill(255);
+    } else if (pcoloring == POINT_CLOUD_COLORING.elevation) {
+      //TODO:
+      console.log("ERROR: elevation coloring not implemented yet");
+    } else if (pcoloring == POINT_CLOUD_COLORING.intensity){
+      //TODO:
+      console.log("ERROR: intensity coloring not implemented yet");
     }
+
+    console.log(this.colors);
 
     // Create geometry to render the pointcloud
     // itemSize = 3 because there are 3 values (components) per vertex
@@ -386,11 +441,13 @@ AFRAME.registerComponent('lasloader', {
     //console.log(this.midpoint);
   },
   _resolvePointcloudColoring () {
-    const pointCloudColoring = POINT_CLOUD_COLORING[this.data.pointcloudColoring];
+    //console.log(this.data.pointcloudColoring.replace("\'","").replace("\'",""));
+    const pointCloudColoring = POINT_CLOUD_COLORING[this.data.pointcloudColoring.replace("\'","").replace("\'","")];
     if (!pointCloudColoring) {
       console.warn('Invalid value for point cloud coloring');
       return PointCloudColoring.White;
     } else {
+      console.log(pointCloudColoring);
       return pointCloudColoring;
     }
   },
