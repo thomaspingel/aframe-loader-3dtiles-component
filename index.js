@@ -34,7 +34,10 @@ function downloadBlob(content, filename, contentType) {
 }
 
 
-
+/**
+ * Enums from original NYTimes code
+ * Used for getting coloring inputs
+ */
 const POINT_CLOUD_COLORING = {
   white: PointCloudColoring.White,
   intensity: PointCloudColoring.Intensity,
@@ -42,15 +45,19 @@ const POINT_CLOUD_COLORING = {
   elevation: PointCloudColoring.Elevation,
   rgb: PointCloudColoring.RGB
 };
+
+/**
+ * This is the entire component for the las loader
+ */
 AFRAME.registerComponent('lasloader', {
   schema: {
-    url: { type: 'string' },
-    downid: { type: 'string' },
-    cameraEl: { type: 'selector' },
-    renderDistance: { type: 'number', default: 50 },
-    pointcloudColoring: { type: 'string', default: 'white' },
-    pointcloudElevationRange: { type: 'array', default: ['0', '400'] },
-    classificationValue: {type: 'number', default: 6}
+    url: { type: 'string' }, //url of the pointcloud file
+    downid: { type: 'string', default:null }, //element id of download button in scene
+    cameraEl: { type: 'selector' }, //element id of camera in scene
+    renderDistance: { type: 'number', default: 50 }, //how many units away from origin (z-axis) to place the center of the pointcloud
+    pointcloudColoring: { type: 'string', default: 'classification' },
+    pointcloudElevationRange: { type: 'array', default: ['0', '400'] }, //from original code, not implemented yet here
+    classificationValue: {type: 'number', default: 6} //current value that classification tool is set at; not used when lasloader is by itself
   },
   init: async function () {
 
@@ -78,6 +85,7 @@ AFRAME.registerComponent('lasloader', {
     // distance in z-coordinate from origin to render the pointcloud
     this.renderDistance = this.data.renderDistance;
     
+    // model is the entire pointcloud data loaded from the LAZ file
     let model = await this._initCloud();
     console.log(model);
 
@@ -162,9 +170,13 @@ AFRAME.registerComponent('lasloader', {
       csv = arrayToCsv(csv)
       downloadBlob(csv, 'export.csv', 'text/csv;charset=utf-8;')
     }
-    // Set the downloadcsv function with the button
-    var button = document.querySelector(this.data.downid);
-    button.addEventListener('click', downloadcsv);
+
+    if(this.data.downid != null){
+      // Set the downloadcsv function with the button
+      var button = document.querySelector(this.data.downid);
+      button.addEventListener('click', downloadcsv);
+    }
+
 
     if (THREE.Cache.enabled) {
       console.warn('3D Tiles loader cannot work with THREE.Cache, disabling.');
