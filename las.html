@@ -1,15 +1,39 @@
 <html>
+
 <!--    Scripts to be inmported-->
+
   <head>
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/handy-work@3.1.9/build/handy-controls.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aframe-blink-controls/dist/aframe-blink-controls.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aframe-htmlmesh@2.0.1/build/aframe-html.min.js"></script> 
+
     <script src="./dist/aframe-loader-laz-component.min.js"></script>
+
     <script src="./classifier.js"></script>
+    <link rel="stylesheet" href="./style.css" />
   </head>
 
   <body>
+    <script>
+      // add classifications window
+      function toggleAddClass(){
+        let addwindow = document.getElementById("addcolor");
+        if(addwindow.hidden==true){
+          addwindow.hidden=false;
+          document.getElementById("plusbtn").innerText="x";
+          document.getElementById("plusbtn").style="font-size:35px";
+          document.getElementById("my-interface").style="background-color:white; width:800px";
+        } else {
+          addwindow.hidden = true;
+          document.getElementById("plusbtn").innerText="+";
+          document.getElementById("plusbtn").style="font-size:25px";
+          document.getElementById("my-interface").style="background-color:white; width:800px";
+        }
+        
+        
+      }
+    </script>
     <a-scene webxr="overlayElement:dom-overlay" cursor="rayOrigin: mouse" raycaster="objects: [html]; interval:100;" inspector="url: https://cdn.jsdelivr.net/gh/aframevr/aframe-inspector@master/dist/aframe-inspector.min.js">
         <a-assets>
     <!-- 			<a-mixin id="blink" blink-controls="collisionEntities: #ground;"></a-mixin> -->
@@ -17,14 +41,20 @@
             <a-mixin id="raycaster" raycaster="showLine: true; far: 100; lineColor: red; objects: [html], #pointcloud; interval:100;"></a-mixin>
         </a-assets>
 
-  <!-- CONTROLS -->
-  <a-entity oculus-touch-controls="hand: left" raycaster="objects: .collidable; showLine:true; near: 0.1; far:100" trigger></a-entity>
-  <a-entity oculus-touch-controls="hand: right" trigger ></a-entity>
+
+              <!-- CONTROLS -->
+  <!--  -->
+<!--   <a-entity oculus-touch-controls="hand: left" raycaster="objects: .collidable; showLine:true; near: 0.1; far:100 autoRefresh:false" trigger> -->
+  
+<!--   </a-entity> -->
 
         <!-- camera -->
     <a-entity id="cameraRig" spawn-in-circle="radius:3">
-			<a-entity class="avatar-head" camera="near:0.01;" cursor="rayOrigin: mouse" look-controls="pointerLockEnabled: false" wasd-controls="acceleration:20;" position="0 1.65 0">
-        <!--Download Button -->
+
+			<!-- camera -->
+			<a-entity class="avatar-head" camera="near:0.01;" cursor="rayOrigin: mouse" look-controls="pointerLockEnabled: false" wasd-controls="acceleration:150;" position="0 0 0">
+<!--         <a-entity id="download-buttonid" geometry="primitive: box" material="color: red" position="-3 1 -2.5"></a-entity> -->
+
         <a-entity
           style="
             cursor: pointer;
@@ -38,14 +68,18 @@
           text="value: Download Cloud - csv; color: white; align: center; width: 2;"
           onmouseenter="this.setAttribute('scale', '1.1 1.1 1.1')"
           onmouseleave="this.setAttribute('scale', '1 1 1')"></a-entity>
-      </a-entity>
+
+        </a-entity>
+
 
 			<!-- Hand tracking -->
 			<a-entity handy-controls >
 				<!-- These also do teleportaion for Blink controls in VR -->
 				<!-- These are present for hand tracking but hands don't have joysticks so do nothing -->
-				<a-entity data-right="ray" mixin="blink raycaster" cursor trigger></a-entity>
-				<a-entity data-left="ray" mixin="blink raycaster" cursor trigger></a-entity>
+
+				<a-entity id="righthand" data-right="ray" mixin="blink raycaster" cursor classify></a-entity>
+				<a-entity id="lefthand" data-left="ray" mixin="blink raycaster" cursor classify></a-entity>
+
 				<!-- markers to let us know the real location of the hands, you probably want to make them visible="false" or just make them empty <a-entities> -->
 				<a-entity id="left-no-magnet" data-left="grip" data-no-magnet radius="0.01">
 					<a-entity html="cursor:#cursor;html:#my-interface" position="-0.142 -0.0166 -0.02928" rotation="-80 90 0" scale="0.5 0.5 0.5"></a-entity>
@@ -54,65 +88,404 @@
 			</a-entity>
 		</a-entity> 
       
+
+  
+    <a-sphere  id="sph" position="0 0 0" material="color:red" scale="0.12 0.12 0.12"></a-sphere>
+
 <!--Pointcloud -->
+
 <a-entity
   id="pointcloud"
-  position="0 0 0"
-  rotation="0 1 1"
+  position="0 0 -50"
+  rotation="270 0 0"
   scale="1 1 1"
   classifier 
   lasloader="
     url: https://rawhitten.github.io/pdal.southwest.09242022.laz;
     downid: #download-buttonid;
     cameraEl: #camera;
-    pointcloudColoring: classification;">
-</a-entity>
-
-
+    lefthandEl: #lefthand;
+    righthandEl: #righthand;
+    pointcloudColoring: rgb; 
+  "
+  >
+  </a-entity>
 </a-scene>
+ 
 
 
 <!--    Menu for the left hand-->
+
     <div id="dom-overlay">
-      <section style="display: inline-block; background: white; color: #333333; border-radius: 1em; padding: 1em; margin:0;" id="my-interface">
+      <section id="my-interface">
+        <div id="grid">
+        <div id="classification-values">
+          <fieldset style="border: 0 none; border-top: 1px solid grey">
+            <legend><h2>Classification</h2></legend>
+            <button id="c1" class="outerclass" style="background-color: #c8c8c8">
+              <p>1</p>
+              <input
+                onclick="handleRadio(this)"
+                type="radio"
+                id="class-unclassified"
+                class="classbtn"
+                name="pc_class"
+                value="0"
+                checked
+              /><label for="class-unclassified"> </label>
+            </button>
+            <button id="c2" class="outerclass" style="background-color: #804e0a">
+              <p style="color: white">2</p>
+              <input
+                onclick="handleRadio(this)"
+                type="radio"
+                id="class-ground"
+                class="classbtn"
+                name="pc_class"
+                value="2"
+                checked
+              /><label for="class-ground"> </label>
+            </button>
+            <button id="c3" class="outerclass" style="background-color: #167518">
+              <p style="color: white">3</p>
+              <input
+                onclick="handleRadio(this)"
+                type="radio"
+                id="class-lowvegetation"
+                class="classbtn"
+                name="pc_class"
+                value="3"
+                checked
+              /><label for="class-veg"> </label>
+            </button>
+            <button id="c4" class="outerclass" style="background-color: #21A624" hidden>
+              <p>4</p>
+              <input
+                onclick="handleRadio(this)"
+                type="radio"
+                id="class-mediumvegetation"
+                class="classbtn"
+                name="pc_class"
+                value="4"
+                checked
+              /><label for="class-veg"> </label>
+            </button>
+            <button id="c5" class="outerclass" style="background-color: #32ED36" hidden>
+              <p>5</p>
+              <input
+                onclick="handleRadio(this)"
+                type="radio"
+                id="class-unclassified"
+                class="classbtn"
+                name="pc_class"
+                value="5"
+                checked
+              /><label for="class-ground"> </label>
+            </button>
+            <button id="c6"class="outerclass" style="background-color: #3a9ebd">
+              <p>6</p>
+              <input
+                onclick="handleRadio(this)"
+                type="radio"
+                id="class-building"
+                class="classbtn"
+                name="pc_class"
+                value="6"
+                checked
+              /><label for="class-veg"></label>
+            </button>
+            <button id="c7" class="outerclass" style="background-color: #ff0000" >
+              <p>7</p>
+              <input
+                onclick="handleRadio(this)"
+                type="radio"
+                id="class-lowpoint"
+                class="classbtn"
+                name="pc_class"
+                value="7"
+                checked
+              /><label for="class-lowpoint"></label>
+            </button>
+            <button id="c8" class="outerclass" style="background-color: #ffff00" >
+              <p>8</p>
+              <input
+                onclick="handleRadio(this)"
+                type="radio"
+                id="class-masspoint"
+                class="classbtn"
+                name="pc_class"
+                value="8"
+                checked
+              /><label for="class-masspoint"></label>
+            </button>
+            <button id="c9" class="outerclass" style="background-color: #0000ff" >
+              <p>9</p>
+              <input
+                onclick="handleRadio(this)"
+                type="radio"
+                id="class-water"
+                class="classbtn"
+                name="pc_class"
+                value="9"
+                checked
+              /><label for="class-water"></label>
+            </button>
+            <button id="c10" class="outerclass" style="background-color: #ED8F02" >
+              <p>10</p>
+              <input
+                onclick="handleRadio(this)"
+                type="radio"
+                id="class-reserved"
+                class="classbtn"
+                name="pc_class"
+                value="10"
+                checked
+              /><label for="class-res"></label>
+            </button>
+            <button id="c11" class="outerclass" style="background-color: #ED8F02" >
+              <p>11</p>
+              <input
+                onclick="handleRadio(this)"
+                type="radio"
+                id="class-reserved"
+                class="classbtn"
+                name="pc_class"
+                value="11"
+                checked
+              /><label for="class-res"></label>
+            </button>
+            <button id="c12" class="outerclass" style="background-color: #ff00ff" >
+              <p>12</p>
+              <input
+                onclick="handleRadio(this)"
+                type="radio"
+                id="class-overlap"
+                class="classbtn"
+                name="pc_class"
+                value="12"
+                checked
+              /><label for="class-overlap"></label>
+            </button>
+
+            <button 
+              id="plusbtn"
+              class="outerclass"
+              onclick="toggleAddClass()"
+            ><h1>+</h1></button>
+            
+          </fieldset>
+          
+        </div>
+        <div id="point-size">
+          <h2>Point Size</h2>
+          <input
+            type="range"
+            min="1"
+            max="15"
+            value="1"
+            class="slider"
+            id="point"
+          />
+          <div id="pointsizevalue">1</div>
+        </div>
+        <div id="coloring">
+          <h2>
+            Coloring
+          </h2>
+          
+          <button  class="color">
+          <input type="radio" name="coloring" class="radio" value="classification" onclick="changeColoring(this.value)"/>
+            <br>
+            Classification
+          </button>
+          <br>
+          <button  class="color">
+          <input type="radio" name="coloring" class="radio" value="rgb" onclick="changeColoring(this.value)"/>
+            <br>
+            RGB
+          </button>
         
-        <fieldset style="border:0 none;border-top: 1px solid grey;">
-          <legend>Classification</legend>
-          <input onclick="handleRadio(this)" type="radio" id="class-unclassified" name="pc_class" value="0" checked><label for="class-unclassified"> Unclassified</label>
-          <input onclick="handleRadio(this)" type="radio" id="class-ground" name="pc_class" value="2" checked><label for="class-ground"> Ground</label>
-          <input onclick="handleRadio(this)" type="radio" id="class-vegetation" name="pc_class" value="3" checked><label for="class-veg"> Vegetation</label>
-          <input onclick="handleRadio(this)" type="radio" id="class-building" name="pc_class" value="6" checked><label for="class-veg"> Building</label>
-        </fieldset>
-        
-        <h2>Settings</h2>
-          <button onclick="AFRAME.scenes[0].exitVR()" style="display: block;">Exit Immersive</button>
+        </div>
+        <div id="exit-vr">
+          <h2>Settings</h2>
+          <button onclick="AFRAME.scenes[0].exitVR()" style="font-size:20px; padding:10px;">
+            <p>Exit Immersive</p>
+          </button>
+        </div>
+
+        <div id="addcolor" hidden>
+          <h2>Add Classification</h2>
+          <button 
+            id="a1"
+            class="addclass" 
+            style="background-color: #c8c8c8"
+            value="1"
+            onclick="addcolor(this.value)"
+            hidden
+           >
+            <p>1</p>
+          </button>
+          <button 
+            id="a2"
+            class="addclass" 
+            style="background-color: #804e0a;
+                  color: white;"
+            value="2"
+            onclick="addcolor(this.value)"
+            hidden
+           >
+            <p>2</p>
+          </button>
+          <button 
+            id="a3"
+            class="addclass" 
+            style="background-color: #167518; color: white"
+            value="3"
+            onclick="addcolor(this.value)"
+            hidden
+           >
+            <p>3</p>
+          </button>
+          <button 
+            id="a4"
+            class="addclass" 
+            style="background-color: #21A624; color: white"
+            value="4"
+            onclick="addcolor(this.value)">
+            <p>4</p>
+          </button>
+          <button
+            id="a5"
+            class="addclass" 
+            style="background-color: #32ED36;"
+            value="5"
+            onclick="addcolor(this.value)">
+            <p>5</p>
+          </button>
+          <button 
+            id="a6"
+            class="addclass" 
+            style="background-color: #3a9ebd;"
+            value="6"
+            onclick="addcolor(this.value)"
+            hidden>
+            <p>6</p>
+          </button>          
+          <button 
+            id="a7"
+            class="addclass" 
+            style="background-color: #ff0000;"
+            value="7"
+            onclick="addcolor(this.value)">
+            <p>7</p>
+          </button>                    
+          <button
+            id="a8" 
+            class="addclass" 
+            style="background-color: #ffff00;"
+            value="8"
+            onclick="addcolor(this.value)">
+            <p>8</p>
+          </button> 
+          <button
+            id="a9" 
+            class="addclass" 
+            style="background-color: #0000ff; color:white"
+            value="9"
+            onclick="addcolor(this.value)">
+            <p>9</p>
+          </button> 
+          <button
+            id="a10" 
+            class="addclass" 
+            style="background-color: #ED8F02;"
+            value="10"
+            onclick="addcolor(this.value)">
+            <p>10</p>
+          </button> 
+          <button
+            id="a11" 
+            class="addclass" 
+            style="background-color: #ED8F02;"
+            value="11"
+            onclick="addcolor(this.value)">
+            <p>11</p>
+          </button>
+          <button 
+            id="a12"
+            class="addclass" 
+            style="background-color: #ff00ff;"
+            value="12"
+            onclick="addcolor(this.value)">
+            <p>12</p>
+          </button> 
+        </div>
+      </div>
       </section>
     </div>
-    
-    
   </body>
-  
+
   <script>
-  // This part of code deals with taking link from url and visualising it
-  const pointcloud = document.getElementById("pointcloud");
-  console.log(window.location.search)
-  var url = new URL(window.location.href);
-  var PTlink = url.searchParams.get("link");
-  console.log("Link for redirection:")
-  console.log(PTlink)
-    if(PTlink != null){
-      pointcloud.setAttribute('lasloader', {url: PTlink});
+    // console.log("Hello")
+    const pointcloud = document.getElementById("pointcloud");
+    // console.log("pt -")
+    // console.log(pointcloud)
+    console.log(window.location.search);
+    var url = new URL(window.location.href);
+    var PTlink = url.searchParams.get("url");
+    console.log("Link for redirection:");
+    console.log(PTlink);
+    if (PTlink != null) {
+      pointcloud.setAttribute("lasloader", { url: PTlink });
+    }
+    function handleRadio(data) {
+      console.log(data);
+      console.log(data.attributes.value.value);
+      console.log(document.getElementById("pointcloud").components.lasloader);
+      document
+        .getElementById("pointcloud")
+        .setAttribute(
+          "lasloader",
+          "classificationValue",
+          data.attributes.value.value
+        );
+      console.log(
+        document.getElementById("pointcloud").components.lasloader.data
+          .classificationValue
+      );
+      
     }
 
-  // Handles the change in classification on menu side
-  function handleRadio(data){
-    console.log(data)
-    console.log(data.attributes.value.value);
-    console.log(document.getElementById("pointcloud").components.lasloader);
-    document.getElementById("pointcloud").setAttribute("lasloader", "classificationValue", data.attributes.value.value);
-    console.log(document.getElementById("pointcloud").components.lasloader.data.classificationValue);
-  }
-//     url: https://rawhitten.github.io/chunk.laz;
+    function changeColoring(value){
+      //console.log("\'"+value+"\'");
+     // console.log(typeof(value));
+      console.log(("\'"+value+"\'").replace("\'","").replace("\'",""));
+      //document.getElementById("pointcloud").setAttribute("lasloader","pointcloudColoring", "classification");
+      document.getElementById("pointcloud").setAttribute("lasloader","pointcloudColoring", "\'"+value+"\'");
+    }
+
+    console.log("left hand position: ");
+    console.log(document.getElementById("lefthand").object3D.position);
+
+    // displays the value of the selected point size below the slider
+    let ptsize = document.getElementById("pointsizevalue");
+    let slider = document.getElementById("point");
+    ptsize.innerHTML = slider.value;
+
+    // point size slider
+    slider.oninput = function () {
+      ptsize.innerHTML = this.value;
+      document.getElementById("pointcloud").setAttribute("lasloader","pointSize", this.value);
+    };
+
+    addcolor = function(value){
+      document.getElementById("c"+value).hidden=false;
+      document.getElementById("a"+value).hidden=true;
+    }
+
+    
+
+    //     url: https://rawhitten.github.io/chunk.laz;
+
   </script>
-  
 </html>
