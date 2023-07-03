@@ -44,6 +44,8 @@ IMPORTANT: Download `aframe-loader-laz-component.min.js` located in the `dist` f
         classifier
         lasloader="
           url: https://rawhitten.github.io/chunk.laz;
+          lefthandEl: #lefthand;
+          righthandEl: #righthand;
           pointcloudColoring: classification; 
         "
       >
