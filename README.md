@@ -1,3 +1,5 @@
+# aframe-loader-laz-component
+This is a LAZ/LAS point cloud loader for AframeVR, built off of the NYTimes R&D department's [aframe-loader-3dtiles-component](https://github.com/nytimes/aframe-loader-3dtiles-component) and developed by the [Near Earth Imaging Lab](https://www.nearearthimaginglab.org/) at Virginia Tech.
 ## Example Scene
 IMPORTANT: Download `aframe-loader-laz-component.min.js` located in the `dist` folder and place it in the root directory
 
@@ -52,7 +54,7 @@ IMPORTANT: Download `aframe-loader-laz-component.min.js` located in the `dist` f
         id="righthand"
         data-right="ray"
         cursor
-        raycaster="showLine: true; far: 2; lineColor: red; objects: [html], #pointcloud; direction:0 -0.5 -1"
+        raycaster="showLine: true; far: 2; lineColor: red; objects:#pointcloud; direction:0 -0.5 -1"
       >
       </a-entity>
       <a-entity
@@ -60,20 +62,13 @@ IMPORTANT: Download `aframe-loader-laz-component.min.js` located in the `dist` f
         thumbstick-logging
         id="lefthand"
         data-left="ray"
-        raycaster="showLine: true; far: 2; lineColor: blue; objects: [html], #pointcloud; direction:0 -0.8 -1"
+        raycaster="showLine: true; far: 2; lineColor: blue; objects:#pointcloud; direction:0 -0.8 -1"
         cursor
       >
-        <a-entity
-          html="cursor:#cursor;html:#my-interface"
-          position="-0.042 0.0166 -0.02928"
-          rotation="-80 90 0"
-          scale="0.5 0.5 0.5"
-        ></a-entity>
       </a-entity>
     </a-scene>
   </body>
 </html>
-
 ```
 
 ## Component Schema
@@ -91,7 +86,7 @@ IMPORTANT: Download `aframe-loader-laz-component.min.js` located in the `dist` f
 If `lefthandEl` and `righthandEl` point to valid controller objects in VR mode, use the grip button on either controller to manipulate the point cloud in the scene. Move the controllers towards or away from each other to control scale/zoom, twist the controllers (like you were rotating a plate on a table) to rotate the point cloud on its y axis, and move the controllers in the same direction (like pulling a tablecloth) to translate the point cloud in space.
 
 ## Dev Notes
-Most recent test version at [https://broad-ubiquitous-tabletop.glitch.me/?link=https://rawhitten.github.io/chunk.laz](https://broad-ubiquitous-tabletop.glitch.me/?link=https://rawhitten.github.io/chunk.laz).
+Most recent test version at [https://broad-ubiquitous-tabletop.glitch.me/?url=https://rawhitten.github.io/chunk.laz](https://broad-ubiquitous-tabletop.glitch.me/?url=https://rawhitten.github.io/chunk.laz).
 
 TODO:
 - Improve navigation, including orientation change and the ability to raise and lower the navigation surface. 
