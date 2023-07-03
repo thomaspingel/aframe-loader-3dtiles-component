@@ -63,7 +63,7 @@ AFRAME.registerComponent('lasloader', {
     }
     this.righthand = document.querySelector(this.data.righthandEl);
     this.lefthand = document.querySelector(this.data.lefthandEl);
-    console.log(this.righthand.object3D.position);
+    //console.log(this.righthand.object3D.position);
     /**
      * Standard Classification Colors
      * source: https://www.researchgate.net/figure/Colors-used-to-represent-LAS-classification-codes-in-PDQ_fig2_283413311
@@ -180,11 +180,14 @@ AFRAME.registerComponent('lasloader', {
 
     }
 
-    var button = document.querySelector(this.data.downid);
-    // console.log("button found 2 -")
-    console.log(button)
-    button.style.cursor = "pointer";
-    button.addEventListener('click', downloadcsv);
+    if(this.data.downid != null){
+      var button = document.querySelector(this.data.downid);
+      // console.log("button found 2 -")
+      console.log(button)
+      button.style.cursor = "pointer";
+      button.addEventListener('click', downloadcsv);
+    }
+
 
     if (THREE.Cache.enabled) {
       console.warn('3D Tiles loader cannot work with THREE.Cache, disabling.');
@@ -384,61 +387,63 @@ AFRAME.registerComponent('lasloader', {
     
   },
   tick: function(time, timeDelta) {
-    
-    // This is all handling the controller transformations
-    if(this.r != null && this.geometry!=null){
-      this.r1=new Vector3(this.righthand.object3D.position.x, this.righthand.object3D.position.y, this.righthand.object3D.position.z);
-      this.l1=new Vector3(this.lefthand.object3D.position.x, this.lefthand.object3D.position.y, this.lefthand.object3D.position.z);
-      
-      // current distance vector between right and left hands
-      this.distv1 = this.r1.clone().sub(this.l1);
+    if(this.righthand != null && this.lefthand != null){
+        // This is all handling the controller transformations
+      if(this.r != null && this.geometry!=null){
+        this.r1=new Vector3(this.righthand.object3D.position.x, this.righthand.object3D.position.y, this.righthand.object3D.position.z);
+        this.l1=new Vector3(this.lefthand.object3D.position.x, this.lefthand.object3D.position.y, this.lefthand.object3D.position.z);
+        
+        // current distance vector between right and left hands
+        this.distv1 = this.r1.clone().sub(this.l1);
 
-      // find x, y, z angles between distance vectors (distv, distv1)
-        // find 2d projections of each vector first
-        this.distv1xy = new Vector3(this.distv1.x, this.distv1.y, 0).normalize();
-        this.distv1xz = new Vector3(this.distv1.x, 0, this.distv1.z).normalize();
-        this.distv1yz = new Vector3(0, this.distv1.y, this.distv1.z).normalize();
-        this.distvxy = new Vector3(this.distv.x, this.distv.y, 0).normalize();
-        this.distvxz = new Vector3(this.distv.x, 0, this.distv.z).normalize();
-        this.distvyz = new Vector3(0, this.distv.y, this.distv.z).normalize();
-        let rotScale = 0.3;
-        // find angle components between the two vectors
-        this.dx = rotScale*(Math.atan2(this.distv.y, this.distv.z)-Math.atan2(this.distv1.y, this.distv1.z));
-        this.dy = rotScale*(Math.atan2(this.distv.x, this.distv.z)-Math.atan2(this.distv1.x, this.distv1.z));
-        this.dz = rotScale*(Math.atan2(this.distv.x, this.distv.y)-Math.atan2(this.distv1.x, this.distv1.y));
+        // find x, y, z angles between distance vectors (distv, distv1)
+          // find 2d projections of each vector first
+          this.distv1xy = new Vector3(this.distv1.x, this.distv1.y, 0).normalize();
+          this.distv1xz = new Vector3(this.distv1.x, 0, this.distv1.z).normalize();
+          this.distv1yz = new Vector3(0, this.distv1.y, this.distv1.z).normalize();
+          this.distvxy = new Vector3(this.distv.x, this.distv.y, 0).normalize();
+          this.distvxz = new Vector3(this.distv.x, 0, this.distv.z).normalize();
+          this.distvyz = new Vector3(0, this.distv.y, this.distv.z).normalize();
+          let rotScale = 0.3;
+          // find angle components between the two vectors
+          this.dx = rotScale*(Math.atan2(this.distv.y, this.distv.z)-Math.atan2(this.distv1.y, this.distv1.z));
+          this.dy = rotScale*(Math.atan2(this.distv.x, this.distv.z)-Math.atan2(this.distv1.x, this.distv1.z));
+          this.dz = rotScale*(Math.atan2(this.distv.x, this.distv.y)-Math.atan2(this.distv1.x, this.distv1.y));
 
-        console.log(this.dx+" "+this.dy+" "+this.dz);
-        //console.log(this.dx+" "+this.dy+" "+this.dz);
+          console.log(this.dx+" "+this.dy+" "+this.dz);
+          //console.log(this.dx+" "+this.dy+" "+this.dz);
 
-      this.dist1 = this.r1.clone().distanceTo(this.l1);
-      this.dr = this.r1.clone().sub(this.r);
-      this.dl = this.l1.clone().sub(this.l);
-      this.ddist = this.dist1 - this.dist;
-      this.midpoint1 = this.r1.clone().lerp(this.l1, 0.5);    
-      this.dmidpoint = this.midpoint1.clone().sub(this.midpoint);
-      this.da = this.a1 - this.a;
-      let scale = 0.5;
-      let distScale = 15;
+        this.dist1 = this.r1.clone().distanceTo(this.l1);
+        this.dr = this.r1.clone().sub(this.r);
+        this.dl = this.l1.clone().sub(this.l);
+        this.ddist = this.dist1 - this.dist;
+        this.midpoint1 = this.r1.clone().lerp(this.l1, 0.5);    
+        this.dmidpoint = this.midpoint1.clone().sub(this.midpoint);
+        this.da = this.a1 - this.a;
+        let scale = 0.5;
+        let distScale = 15;
 
-      //this.el.object3D.scale.multiplyScalar((this.ddist*scale)+1);
-      //console.log(this.ddist+" "+((this.ddist*scale)+1));
-      
-      //this.el.object3D.position.addScaledVector(this.dmidpoint, distScale); 
-      // this.rot = this.dr.clone().cross(this.dl).multiplyScalar(this.da); 
-      //this.el.object3D.rotation.x-=this.dx%(Math.PI/4);
-      //this.el.object3D.rotation.y-=this.dy%(Math.PI/4);
-      this.el.object3D.rotation.z+=this.dz;
-      // console.log(this.rot);
+        //this.el.object3D.scale.multiplyScalar((this.ddist*scale)+1);
+        //console.log(this.ddist+" "+((this.ddist*scale)+1));
+        
+        //this.el.object3D.position.addScaledVector(this.dmidpoint, distScale); 
+        // this.rot = this.dr.clone().cross(this.dl).multiplyScalar(this.da); 
+        //this.el.object3D.rotation.x-=this.dx%(Math.PI/4);
+        //this.el.object3D.rotation.y-=this.dy%(Math.PI/4);
+        this.el.object3D.rotation.z+=this.dz;
+        // console.log(this.rot);
+      }
+      this.r = new Vector3(this.righthand.object3D.position.x, this.righthand.object3D.position.y, this.righthand.object3D.position.z);
+      this.l = new Vector3(this.lefthand.object3D.position.x, this.lefthand.object3D.position.y, this.lefthand.object3D.position.z);   
+      this.a = this.r.angleTo(this.l);
+      this.midpoint = this.r.clone().lerp(this.l, 0.5);
+      this.dist = this.r.clone().distanceTo(this.l);
+
+      // previous distance vector between right and left hands
+      this.distv = this.r.clone().sub(this.l);
+
     }
-    this.r = new Vector3(this.righthand.object3D.position.x, this.righthand.object3D.position.y, this.righthand.object3D.position.z);
-    this.l = new Vector3(this.lefthand.object3D.position.x, this.lefthand.object3D.position.y, this.lefthand.object3D.position.z);   
-    this.a = this.r.angleTo(this.l);
-    this.midpoint = this.r.clone().lerp(this.l, 0.5);
-    this.dist = this.r.clone().distanceTo(this.l);
-
-    // previous distance vector between right and left hands
-    this.distv = this.r.clone().sub(this.l);
-    //console.log(this.midpoint);
+   
   },
   _resolvePointcloudColoring () {
     //console.log(this.data.pointcloudColoring.replace("\'","").replace("\'",""));
