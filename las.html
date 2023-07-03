@@ -1,14 +1,19 @@
 <html>
-  
+
+<!--    Scripts to be inmported-->
+
   <head>
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-	  <script src="https://cdn.jsdelivr.net/npm/handy-work@3.1.9/build/handy-controls.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/handy-work@3.1.9/build/handy-controls.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aframe-blink-controls/dist/aframe-blink-controls.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aframe-htmlmesh@2.0.1/build/aframe-html.min.js"></script> 
-    <script src="dist/aframe-loader-laz-component.js"></script>
+
+    <script src="./dist/aframe-loader-laz-component.min.js"></script>
+
     <script src="./classifier.js"></script>
     <link rel="stylesheet" href="./style.css" />
   </head>
+
   <body>
     <script>
       // add classifications window
@@ -30,25 +35,26 @@
       }
     </script>
     <a-scene webxr="overlayElement:dom-overlay" cursor="rayOrigin: mouse" raycaster="objects: [html]; interval:100;" inspector="url: https://cdn.jsdelivr.net/gh/aframevr/aframe-inspector@master/dist/aframe-inspector.min.js">
-      
-	<a-assets>
-<!-- 			<a-mixin id="blink" blink-controls="collisionEntities: #ground;"></a-mixin> -->
-      <a-mixin id="blink" blink-controls="rotateOnTeleport:true;cameraRig: #cameraRig; teleportOrigin: #head; collisionEntities:#ground;"></a-mixin>
-    <a-mixin id="raycaster" raycaster="showLine: true; far: 100; lineColor: red; objects: [html], #pointcloud; interval:100;"></a-mixin>
-		</a-assets>
+        <a-assets>
+    <!-- 			<a-mixin id="blink" blink-controls="collisionEntities: #ground;"></a-mixin> -->
+            <a-mixin id="blink" blink-controls="rotateOnTeleport:true;cameraRig: #cameraRig; teleportOrigin: #head; collisionEntities:#ground;"></a-mixin>
+            <a-mixin id="raycaster" raycaster="showLine: true; far: 100; lineColor: red; objects: [html], #pointcloud; interval:100;"></a-mixin>
+        </a-assets>
+
 
               <!-- CONTROLS -->
   <!--  -->
 <!--   <a-entity oculus-touch-controls="hand: left" raycaster="objects: .collidable; showLine:true; near: 0.1; far:100 autoRefresh:false" trigger> -->
   
 <!--   </a-entity> -->
-  <a-entity oculus-touch-controls="hand: right" trigger ></a-entity>
-      
-      
+
+        <!-- camera -->
     <a-entity id="cameraRig" spawn-in-circle="radius:3">
+
 			<!-- camera -->
 			<a-entity class="avatar-head" camera="near:0.01;" cursor="rayOrigin: mouse" look-controls="pointerLockEnabled: false" wasd-controls="acceleration:150;" position="0 0 0">
 <!--         <a-entity id="download-buttonid" geometry="primitive: box" material="color: red" position="-3 1 -2.5"></a-entity> -->
+
         <a-entity
           style="
             cursor: pointer;
@@ -62,13 +68,15 @@
           text="value: Download Cloud - csv; color: white; align: center; width: 2;"
           onmouseenter="this.setAttribute('scale', '1.1 1.1 1.1')"
           onmouseleave="this.setAttribute('scale', '1 1 1')"></a-entity>
+
         </a-entity>
+
 
 			<!-- Hand tracking -->
 			<a-entity handy-controls >
-
 				<!-- These also do teleportaion for Blink controls in VR -->
 				<!-- These are present for hand tracking but hands don't have joysticks so do nothing -->
+
 				<a-entity id="righthand" data-right="ray" mixin="blink raycaster" cursor classify></a-entity>
 				<a-entity id="lefthand" data-left="ray" mixin="blink raycaster" cursor classify></a-entity>
 
@@ -80,8 +88,11 @@
 			</a-entity>
 		</a-entity> 
       
+
   
     <a-sphere  id="sph" position="0 0 0" material="color:red" scale="0.12 0.12 0.12"></a-sphere>
+
+<!--Pointcloud -->
 
 <a-entity
   id="pointcloud"
@@ -101,6 +112,10 @@
   </a-entity>
 </a-scene>
  
+
+
+<!--    Menu for the left hand-->
+
     <div id="dom-overlay">
       <section id="my-interface">
         <div id="grid">
@@ -471,5 +486,6 @@
     
 
     //     url: https://rawhitten.github.io/chunk.laz;
+
   </script>
 </html>

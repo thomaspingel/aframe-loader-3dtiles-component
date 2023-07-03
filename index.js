@@ -33,6 +33,10 @@ function downloadBlob(content, filename, contentType) {
   pom.click();
 }
 
+/**
+ * Enums from original NYTimes code
+ * Used for getting coloring inputs
+ */
 const POINT_CLOUD_COLORING = {
   white: PointCloudColoring.White,
   intensity: PointCloudColoring.Intensity,
@@ -41,6 +45,9 @@ const POINT_CLOUD_COLORING = {
   rgb: PointCloudColoring.RGB
 };
 
+/**
+ * This is the entire component for the las loader
+ */
 AFRAME.registerComponent('lasloader', {
   schema: {
     url: { type: 'string' },
@@ -53,6 +60,7 @@ AFRAME.registerComponent('lasloader', {
     pointcloudElevationRange: { type: 'array', default: ['0', '400'] },
     classificationValue: {type: 'number', default: 6},
     pointSize: {type: 'number', default: 1}
+
   },
   init: async function () {
     this.rotation = this.el.components.rotation.attrValue;
@@ -88,6 +96,7 @@ AFRAME.registerComponent('lasloader', {
     // distance in z-coordinate from origin to render the pointcloud
     this.renderDistance = this.data.renderDistance;
     
+    // model is the entire pointcloud data loaded from the LAZ file
     let model = await this._initCloud();
     console.log(model);
 
@@ -163,21 +172,22 @@ AFRAME.registerComponent('lasloader', {
     this.geometry.rotateY(this.rotation.y * (Math.PI/180));
     this.geometry.rotateZ(this.rotation.z * (Math.PI/180));
 
-    let downloadcsv = function()
-    {
-      // console.log(mesh_var.mesh)
-      // console.log(mesh_var.el)
+    //Function that takes care of download
+    function downloadcsv(){
       let pos_arr = mesh_var.geometry.getAttribute('position').array
-      // let col_arr = mesh_var.geometry.getAttribute('color').array
       let classification = mesh_var.geometry.getAttribute('classification').array
-
       let csv = []
       for (let i = 0; i < pos_arr.length; i = i + 3) {
         csv.push([pos_arr[i], pos_arr[i+1], pos_arr[i+2], classification[i/3]])
       }
       csv = arrayToCsv(csv)
       downloadBlob(csv, 'export.csv', 'text/csv;charset=utf-8;')
+    }
 
+    if(this.data.downid != null){
+      // Set the downloadcsv function with the button
+      var button = document.querySelector(this.data.downid);
+      button.addEventListener('click', downloadcsv);
     }
 
     if(this.data.downid != null){
@@ -289,6 +299,7 @@ AFRAME.registerComponent('lasloader', {
         }
       }
     }
+
 
     // temp code to make the 30's normal
     // -- Sometimes the classification values load as like 38 instead of 6 and so on
