@@ -85,6 +85,7 @@ IMPORTANT: Download `aframe-loader-laz-component.min.js` located in the `dist` f
 |pointSize| Starting size, in pixels, of the point cloud's points| 1|
 
 ## Controls
+### Manipulating the point cloud
 If `lefthandEl` and `righthandEl` point to valid controller objects in VR mode, use the grip button on either controller to manipulate the point cloud in the scene. Move the controllers towards or away from each other to control scale/zoom, twist the controllers (like you were rotating a plate on a table) to rotate the point cloud on its y axis, and move the controllers in the same direction (like pulling a tablecloth) to translate the point cloud in space.
 
 ## Dev Notes
