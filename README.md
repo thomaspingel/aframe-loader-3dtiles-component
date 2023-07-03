@@ -91,6 +91,21 @@ If `lefthandEl` and `righthandEl` point to valid controller objects in VR mode, 
 ## Dev Notes
 Most recent test version at [https://broad-ubiquitous-tabletop.glitch.me/?url=https://rawhitten.github.io/chunk.laz](https://broad-ubiquitous-tabletop.glitch.me/?url=https://rawhitten.github.io/chunk.laz).
 
+### How to set up the environment
+1. `git clone https://github.com/thomaspingel/aframe-loader-laz-component.git`
+2. `cd aframe-loader-laz-component`
+3. `npm install`
+4. `cd ..`
+5. `git clone https://github.com/thomaspingel/three-loader-3dtiles.git`
+6. `cd three-loader-3dtiles`
+7. `npm install`
+
+### Anatomy of the component
+The main working file is `aframe-loader-laz-component\index.js`. This one contains the component that puts the geometry and mesh together and renders it to the scene. To compile this component, run `npm run dist` from the root of this component, and the resulting file will be found in `aframe-loader-laz-component\dist\aframe-loader-laz-component.min.js`. Note: for development purposes, I like using the non-minified version (aframe-loader-laz-component.js) instead to get more helpful error messages. Compile only the non-min version (much faster) with `npm run dist:max`.
+
+Under the hood, the LAZ file itself is loaded by a separate THREE.js LoaderLAS component, [three-loader-3dtiles](https://github.com/thomaspingel/three-loader-3dtiles), which we never changed the name of. You'll want to clone this repository as well, ideally in the same directory as the aframe component is cloned. The main file to work on in here is `three-loader-3dtiles/src/index.ts`. This one handles running the loaders.gl LASLoader and returns an object with the point cloud's data to the aframe component.
+To compile this component into the `three-loader-3dtiles/dist/three-loader-3dtiles.esm.js` that the aframe component requires, run `npm run build` from the root of `three-loader-3dtiles`.
+
 TODO:
 - Improve navigation, including orientation change and the ability to raise and lower the navigation surface. 
 - Ability to treat the cloud as an object instead of an environment.
