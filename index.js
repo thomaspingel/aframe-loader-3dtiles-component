@@ -63,6 +63,9 @@ AFRAME.registerComponent('lasloader', {
     transform:{type:'boolean', default: false}
   },
   init: async function () {
+    //HIGHLIGHT COLOR:
+    this.highlight=[255,255,0]; //yellow
+
     this.rotation = this.el.components.rotation.attrValue;
     this.el.addEventListener('abuttondown', this.reset);
     this.el.addEventListener('click', this.reset);
@@ -75,7 +78,7 @@ AFRAME.registerComponent('lasloader', {
     this.el.addEventListener('highlight', function highlight(evt){
       //console.log(evt.detail.hand);
      // if(!equals(evt.srcElement.components.lasloader.selected[evt.detail.hand],evt.detail.selected)){
-        console.log(evt.srcElement.components.lasloader.selected[evt.detail.hand]+" "+evt.detail.selected);
+        //console.log(evt.srcElement.components.lasloader.selected[evt.detail.hand]+" "+evt.detail.selected);
         evt.srcElement.components.lasloader.update(evt.srcElement.components.lasloader.data);
       //}
       evt.srcElement.components.lasloader.selected[evt.detail.hand]=evt.detail.selected;
@@ -227,22 +230,28 @@ AFRAME.registerComponent('lasloader', {
    * @param {*} indices array of point indices to change
    * @param {*} clns equal-length array of classification values to change above points to, in that order
    */ 
-  classify: function(indices, clns){
-    if(indices.length != clns.length){ //error-checking
-      console.log("ERROR: tried to classify point array of length %d with values array of length %d", indices.length, clns.length);
-    } else if(this.classification != null) {
+  classify: function(indices,  hand){
+    //if(indices.length != clns.length){ //error-checking
+      //console.log("ERROR: tried to classify point array of length %d with values array of length %d", indices.length, clns.length);
+    if(this.classification != null) {
       //console.log("classifying %d points",indices.length);
-      for(let i=0; i<indices.length;i++){
-        this.classification[indices[i]]=clns[i];
+      // for(let i=0; i<indices.length;i++){
+      //   this.classification[indices[i]]=this.data.classificationValue;
+      // }
+
+      //paint whatever is in sphere selection
+      for(let j=0; j<this.selected[hand].length;j++){
+        this.classification[this.selected[hand][j]]=this.data.classificationValue;
       }
+
       this.update(this.data);
     }
   },
   reset: function(evt){
     console.log('reset');
-    evt.srcElement.object3D.position = new Vector3(this.el.components.position.attrValue.x, this.el.components.position.attrValue.y, this.el.components.position.attrValue.z);
-    evt.srcElement.object3D.rotation = new Vector3(this.el.components.rotation.attrValue.x, this.el.components.rotation.attrValue.y, this.el.components.rotation.attrValue.z);
-    evt.srcElement.object3D.scale = new Vector3(this.el.components.scale.attrValue.x, this.el.components.scale.attrValue.y, this.el.components.scale.attrValue.z);
+    evt.srcElement.object3D.position = new Vector3(evt.srcElement.object3D.position.attrValue.x, evt.srcElement.object3D.position.attrValue.y, evt.srcElement.object3D.position.attrValue.z);
+    evt.srcElement.object3D.rotation = new Vector3(evt.srcElement.object3D.rotation.attrValue.x, evt.srcElement.object3D.rotation.attrValue.y, evt.srcElement.object3D.rotation.attrValue.z);
+    evt.srcElement.object3D.scale = new Vector3(evt.srcElement.object3D.scale.attrValue.x, evt.srcElement.object3D.scale.attrValue.y, evt.srcElement.object3D.scale.attrValue.z);
   },
 /**
  * This is where the geometry and mesh of the pointcloud are loaded and 
@@ -388,9 +397,9 @@ AFRAME.registerComponent('lasloader', {
     for(let j=0;j<2;j++){
       for(let i=0; i<this.selected[j].length;i++){
         //console.log(this.selected[j][i]);
-        this.colors[(this.selected[j][i]*4)]=255;
-        this.colors[(this.selected[j][i]*4)+1]=255;
-        this.colors[(this.selected[j][i]*4)+2]=0;
+        this.colors[(this.selected[j][i]*4)]=this.highlight[0];
+        this.colors[(this.selected[j][i]*4)+1]=this.highlight[1];
+        this.colors[(this.selected[j][i]*4)+2]=this.highlight[2];
       }
     }
 
@@ -454,17 +463,19 @@ AFRAME.registerComponent('lasloader', {
         this.midpoint1 = this.r1.clone().lerp(this.l1, 0.5);    
         this.dmidpoint = this.midpoint1.clone().sub(this.midpoint);
         this.da = this.a1 - this.a;
-        let scale = 0.5;
-        let distScale = 15;
+        let scale = 0.005;
+        let distScale = 1;
 
-        //this.el.object3D.scale.multiplyScalar((this.ddist*scale)+1);
+        
         //console.log(this.ddist+" "+((this.ddist*scale)+1));
         
-        //this.el.object3D.position.addScaledVector(this.dmidpoint, distScale); 
+        this.el.object3D.position.addScaledVector(this.dmidpoint, distScale); 
+        this.el.object3D.scale.multiplyScalar((this.ddist*scale)+1);
+        this.el.object3D.rotation.y-=this.dy%(Math.PI/4);
         // this.rot = this.dr.clone().cross(this.dl).multiplyScalar(this.da); 
         //this.el.object3D.rotation.x-=this.dx%(Math.PI/4);
-        //this.el.object3D.rotation.y-=this.dy%(Math.PI/4);
-        this.el.object3D.rotation.z+=this.dz;
+        
+        //this.el.object3D.rotation.z+=this.dz;
         // console.log(this.rot);
       }
       this.r = new Vector3(this.righthand.object3D.position.x, this.righthand.object3D.position.y, this.righthand.object3D.position.z);
@@ -486,7 +497,7 @@ AFRAME.registerComponent('lasloader', {
       console.warn('Invalid value for point cloud coloring');
       return PointCloudColoring.White;
     } else {
-      console.log(pointCloudColoring);
+      //console.log(pointCloudColoring);
       return pointCloudColoring;
     }
   },
@@ -502,9 +513,7 @@ AFRAME.registerComponent('lasloader', {
       }
     });
   },
-  Highlight: async function (evt) {
-    console.log(evt.detail);
-  }
+
 });
 
 
