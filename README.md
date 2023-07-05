@@ -1,3 +1,14 @@
+## Component Schema
+|Property|Description|Default Value|
+|--------|-----------|-------------|
+|url|url of the pointcloud file |[] |
+|downid|element id of download button in scene |[] |
+|cameraEl|element id of camera in scene |[] |
+|renderDistance|how many units away from origin (z-axis) to place the center of the pointcloud |50 |
+|pointcloudColoring|Which values the appearance of the point cloud should be based on. Currently supports `classification`, `rgb` |classification |
+
+
+
 Most recent test version at [https://broad-ubiquitous-tabletop.glitch.me/?link=https://rawhitten.github.io/chunk.laz](https://broad-ubiquitous-tabletop.glitch.me/?link=https://rawhitten.github.io/chunk.laz).
 
 TODO:
