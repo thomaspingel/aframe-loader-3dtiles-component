@@ -5,6 +5,14 @@ import './textarea';
 if (typeof AFRAME === 'undefined') {
   throw new Error('Component attempted to register before AFRAME was available.');
 }
+function equals(a,b){
+  let i = a.length;
+  while (i--) {
+      if (a[i] !== b[i]) return false;
+  }
+  return true
+}
+
 
 /** Convert a 2D array into a CSV string
  */
@@ -46,18 +54,34 @@ AFRAME.registerComponent('lasloader', {
     url: { type: 'string' },
     downid: { type: 'string' },
     cameraEl: { type: 'selector' },
-    renderDistance: { type: 'number', default: 50 }, //distance that the pointcloud is rendered initially from the camera
     lefthandEl: {type: 'string', default: null}, //id of left hand controller
     righthandEl: {type: 'string', default: null}, //id of right hand controller
     pointcloudColoring: { type: 'string', default: "white" },
     pointcloudElevationRange: { type: 'array', default: ['0', '400'] },
     classificationValue: {type: 'number', default: 6},
-    pointSize: {type: 'number', default: 1}
+    pointSize: {type: 'number', default: 1},
+    transform:{type:'boolean', default: false}
   },
   init: async function () {
     this.rotation = this.el.components.rotation.attrValue;
     this.el.addEventListener('abuttondown', this.reset);
     this.el.addEventListener('click', this.reset);
+
+    // will hold list of points to highlight from left, right controllers respectively
+    this.selected = new Array([],[]);
+
+    // adds point ids to list for highlighting if they are currently selected
+    // -- aka how the data is being sent from the controllers to the pointcloud
+    this.el.addEventListener('highlight', function highlight(evt){
+      //console.log(evt.detail.hand);
+     // if(!equals(evt.srcElement.components.lasloader.selected[evt.detail.hand],evt.detail.selected)){
+        console.log(evt.srcElement.components.lasloader.selected[evt.detail.hand]+" "+evt.detail.selected);
+        evt.srcElement.components.lasloader.update(evt.srcElement.components.lasloader.data);
+      //}
+      evt.srcElement.components.lasloader.selected[evt.detail.hand]=evt.detail.selected;
+    });
+
+
     if(this.data.lefthandEl == null || this.data.righthandEl==null){
       console.log("ERROR: must specify lefthandid and righthandid in lasloader properties.");
     }
@@ -85,8 +109,6 @@ AFRAME.registerComponent('lasloader', {
       [237, 143, 2], //13+: Reserved
     ]
 
-    // distance in z-coordinate from origin to render the pointcloud
-    this.renderDistance = this.data.renderDistance;
     
     let model = await this._initCloud();
     console.log(model);
@@ -133,7 +155,7 @@ AFRAME.registerComponent('lasloader', {
       }else if(i%3==1){
         this.positions[i]-=this.center[1];
       }else{
-        this.positions[i]-=this.center[2]+this.renderDistance;
+        this.positions[i]-=this.center[2];
       }
     }
 
@@ -228,7 +250,7 @@ AFRAME.registerComponent('lasloader', {
  * @param {*} oldData 
  */
   update: async function (oldData) {
-    console.log(this.el.components.position.attrValue);
+    //console.log("update");
     const center = this.el.components.position.attrValue;
     if (oldData.url !== this.data.url) {
       console.log("reloading pointcloud to new url", this.data.url);
@@ -248,7 +270,7 @@ AFRAME.registerComponent('lasloader', {
       ]
 
       
-      console.log(this.center);
+      //console.log(this.center);
 
       /*
       * The base object for the pointcloud geometry
@@ -302,7 +324,7 @@ AFRAME.registerComponent('lasloader', {
     }
 
     let pcoloring = this._resolvePointcloudColoring(this.data.pointCloudColoring);
-    console.log(pcoloring);
+    //console.log(pcoloring);
     // switch (pcoloring) {
     //   case (POINT_CLOUD_COLORING.classification):
         
@@ -329,7 +351,7 @@ AFRAME.registerComponent('lasloader', {
     // }
     
     if (pcoloring == POINT_CLOUD_COLORING.classification){
-      console.log("coloring as CLASSIFICATION");
+      //console.log("coloring as CLASSIFICATION");
       // Set colors to classification based on standard color scheme defined in this.classificationColors
       for(let i = 0; i < this.classification.length; i++){
         if(this.classification[i] >13){
@@ -344,13 +366,13 @@ AFRAME.registerComponent('lasloader', {
         }
       }
     } else if (pcoloring == POINT_CLOUD_COLORING.rgb) {
-      console.log("coloring as RGB");
-      console.log(this.rgb);
+      //console.log("coloring as RGB");
+      //console.log(this.rgb);
       if(this.rgb){
         this.colors = (this.rgb).map(function(x){return x});
       }
       
-      console.log(this.colors);
+      //console.log(this.colors);
     } else if (pcoloring == POINT_CLOUD_COLORING.white) {
       this.colors = new Uint8Array(this.classification.length * 4).fill(255);
     } else if (pcoloring == POINT_CLOUD_COLORING.elevation) {
@@ -361,7 +383,19 @@ AFRAME.registerComponent('lasloader', {
       console.log("ERROR: intensity coloring not implemented yet");
     }
 
-    console.log(this.colors);
+    //console.log(this.selected);
+    // set selected points to yellow
+    for(let j=0;j<2;j++){
+      for(let i=0; i<this.selected[j].length;i++){
+        //console.log(this.selected[j][i]);
+        this.colors[(this.selected[j][i]*4)]=255;
+        this.colors[(this.selected[j][i]*4)+1]=255;
+        this.colors[(this.selected[j][i]*4)+2]=0;
+      }
+    }
+
+    //this.el.setAttribute('lasloader','selected',[0]);
+    //console.log(this.colors);
 
     // Create geometry to render the pointcloud
     // itemSize = 3 because there are 3 values (components) per vertex
@@ -389,7 +423,7 @@ AFRAME.registerComponent('lasloader', {
   tick: function(time, timeDelta) {
     if(this.righthand != null && this.lefthand != null){
         // This is all handling the controller transformations
-      if(this.r != null && this.geometry!=null){
+      if(this.r != null && this.geometry!=null && this.data.transform){
         this.r1=new Vector3(this.righthand.object3D.position.x, this.righthand.object3D.position.y, this.righthand.object3D.position.z);
         this.l1=new Vector3(this.lefthand.object3D.position.x, this.lefthand.object3D.position.y, this.lefthand.object3D.position.z);
         
@@ -410,7 +444,7 @@ AFRAME.registerComponent('lasloader', {
           this.dy = rotScale*(Math.atan2(this.distv.x, this.distv.z)-Math.atan2(this.distv1.x, this.distv1.z));
           this.dz = rotScale*(Math.atan2(this.distv.x, this.distv.y)-Math.atan2(this.distv1.x, this.distv1.y));
 
-          console.log(this.dx+" "+this.dy+" "+this.dz);
+          //console.log(this.dx+" "+this.dy+" "+this.dz);
           //console.log(this.dx+" "+this.dy+" "+this.dz);
 
         this.dist1 = this.r1.clone().distanceTo(this.l1);
@@ -459,7 +493,7 @@ AFRAME.registerComponent('lasloader', {
   _initCloud: async function () {
     const pointCloudColoring = this._resolvePointcloudColoring(this.data.pointcloudColoring);
     console.log("initializing pointcloud");
-    console.log(this.data.pointcloudColoring)
+    //console.log(this.data.pointcloudColoring)
     return LoaderLAS.load({
       url: this.data.url,
       renderer: this.el.sceneEl.renderer,
@@ -467,6 +501,9 @@ AFRAME.registerComponent('lasloader', {
         PointCloudColoring: pointCloudColoring
       }
     });
+  },
+  Highlight: async function (evt) {
+    console.log(evt.detail);
   }
 });
 
