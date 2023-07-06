@@ -95,7 +95,21 @@ AFRAME.registerComponent('lasloader', {
       
     });
     this.el.addEventListener('redo', function redo(evt){
-
+      if(evt.srcElement.components.lasloader.redo.length>0){
+        let stroke = evt.srcElement.components.lasloader.redo.pop()
+        let clns;
+        for(let i =0; i< stroke.length; i++){
+          clns = new Array(stroke[i][0].length);
+          clns.fill(stroke[i][2]);
+          evt.srcElement.components.lasloader.classify(stroke[i][0],clns,-1);
+        }
+        evt.srcElement.components.lasloader.undo.push(stroke);
+        console.log("redo "+stroke.length+" changes");
+        console.log(evt.srcElement.components.lasloader.undo);
+      } else {
+        console.log('reached current. cannot redo');
+        console.log(evt.srcElement.components.lasloader.undo);
+      }
     });
 
     // will hold list of points to highlight from left, right controllers respectively

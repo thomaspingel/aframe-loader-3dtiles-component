@@ -102,7 +102,7 @@
         id="lefthand"
         data-left="ray"
         mixin=""
-        raycaster="showLine: true; far: 12; lineColor: blue; objects: [html], #pointcloud; interval:100; direction:0 0 -1"
+        raycaster="showLine: true; far: 12; lineColor: blue; objects: [html], #pointcloud; interval:100; direction:0 -1 -1"
         cursor
         classify="sphere:sphereL; hand:l"
       >
@@ -115,7 +115,7 @@
       </a-entity>
 
       <!-- markers to let us know the real location of the hands, you probably want to make them visible="false" or just make them empty <a-entities> -->
-      <a-entity
+<!--       <a-entity
         id="left-no-magnet"
         data-left="grip"
         data-no-magnet
@@ -127,7 +127,7 @@
         data-right="grip"
         data-no-magnet
         radius="0.01"
-      ></a-entity>
+      ></a-entity> -->
       <!-- 			</a-entity> -->
     </a-entity>
 
@@ -143,7 +143,7 @@
       id="sphereL"
       position="0 0 0"
       material="color:lightblue; opacity: 0.5"
-      scale="2 2 2"
+      scale="0.2 0.2 0.2"
     ></a-sphere>
 
     <a-entity
@@ -163,389 +163,21 @@
     </a-entity>
   </a-scene>
 
-  <div id="dom-overlay">
-    <section id="my-interface">
-      <div id="grid">
-        <div id="classification-values">
-          <fieldset style="border: 0 none; border-top: 1px solid grey">
-            <legend><h2>Classification</h2></legend>
-            <button
-              id="c1"
-              class="outerclass"
-              style="background-color: #c8c8c8"
-            >
-              <p>1</p>
-              <input
-                onclick="handleRadio(this)"
-                type="radio"
-                id="class-unclassified"
-                class="classbtn"
-                name="pc_class"
-                value="0"
-                checked
-              /><label for="class-unclassified"> </label>
-            </button>
-            <button
-              id="c2"
-              class="outerclass"
-              style="background-color: #804e0a"
-            >
-              <p style="color: white">2</p>
-              <input
-                onclick="handleRadio(this)"
-                type="radio"
-                id="class-ground"
-                class="classbtn"
-                name="pc_class"
-                value="2"
-                checked
-              /><label for="class-ground"> </label>
-            </button>
-            <button
-              id="c3"
-              class="outerclass"
-              style="background-color: #167518"
-            >
-              <p style="color: white">3</p>
-              <input
-                onclick="handleRadio(this)"
-                type="radio"
-                id="class-lowvegetation"
-                class="classbtn"
-                name="pc_class"
-                value="3"
-                checked
-              /><label for="class-veg"> </label>
-            </button>
-            <button
-              id="c4"
-              class="outerclass"
-              style="background-color: #21a624"
-              hidden
-            >
-              <p>4</p>
-              <input
-                onclick="handleRadio(this)"
-                type="radio"
-                id="class-mediumvegetation"
-                class="classbtn"
-                name="pc_class"
-                value="4"
-                checked
-              /><label for="class-veg"> </label>
-            </button>
-            <button
-              id="c5"
-              class="outerclass"
-              style="background-color: #32ed36"
-              hidden
-            >
-              <p>5</p>
-              <input
-                onclick="handleRadio(this)"
-                type="radio"
-                id="class-unclassified"
-                class="classbtn"
-                name="pc_class"
-                value="5"
-              /><label for="class-ground"> </label>
-            </button>
-            <button
-              id="c6"
-              class="outerclass"
-              style="background-color: #3a9ebd"
-            >
-              <p>6</p>
-              <input
-                onclick="handleRadio(this)"
-                type="radio"
-                id="class-building"
-                class="classbtn"
-                name="pc_class"
-                value="6"
-                checked
-              /><label for="class-veg"></label>
-            </button>
-            <button
-              id="c7"
-              class="outerclass"
-              style="background-color: #ff0000"
-              hidden
-            >
-              <p>7</p>
-              <input
-                onclick="handleRadio(this)"
-                type="radio"
-                id="class-lowpoint"
-                class="classbtn"
-                name="pc_class"
-                value="7"
-              /><label for="class-lowpoint"></label>
-            </button>
-            <button
-              id="c8"
-              class="outerclass"
-              style="background-color: #ffff00"
-              hidden
-            >
-              <p>8</p>
-              <input
-                onclick="handleRadio(this)"
-                type="radio"
-                id="class-masspoint"
-                class="classbtn"
-                name="pc_class"
-                value="8"
-              /><label for="class-masspoint"></label>
-            </button>
-            <button
-              id="c9"
-              class="outerclass"
-              style="background-color: #0000ff"
-              hidden
-            >
-              <p>9</p>
-              <input
-                onclick="handleRadio(this)"
-                type="radio"
-                id="class-water"
-                class="classbtn"
-                name="pc_class"
-                value="9"
-              /><label for="class-water"></label>
-            </button>
-            <button
-              id="c10"
-              class="outerclass"
-              style="background-color: #ed8f02"
-              hidden
-            >
-              <p>10</p>
-              <input
-                onclick="handleRadio(this)"
-                type="radio"
-                id="class-reserved"
-                class="classbtn"
-                name="pc_class"
-                value="10"
-              /><label for="class-res"></label>
-            </button>
-            <button
-              id="c11"
-              class="outerclass"
-              style="background-color: #ed8f02"
-              hidden
-            >
-              <p>11</p>
-              <input
-                onclick="handleRadio(this)"
-                type="radio"
-                id="class-reserved"
-                class="classbtn"
-                name="pc_class"
-                value="11"
-              /><label for="class-res"></label>
-            </button>
-            <button
-              id="c12"
-              class="outerclass"
-              style="background-color: #ff00ff"
-              hidden
-            >
-              <p>12</p>
-              <input
-                onclick="handleRadio(this)"
-                type="radio"
-                id="class-overlap"
-                class="classbtn"
-                name="pc_class"
-                value="12"
-              /><label for="class-overlap"></label>
-            </button>
-
-            <button id="plusbtn" class="outerclass" onclick="toggleAddClass()">
-              <h1>+</h1>
-            </button>
-          </fieldset>
-        </div>
-        <div id="point-size">
-          <h2>Ray Length</h2>
-          <input
-            type="range"
-            min="1"
-            max="50"
-            value="2"
-            class="slider"
-            id="raylen"
-            onchange="raylen(this.value)"
-          />
-          <div id="raylenvalue">2</div>
-          <h2>Point Size</h2>
-          <input
-            type="range"
-            min="1"
-            max="15"
-            value="1"
-            class="slider"
-            id="point"
-          />
-          <div id="pointsizevalue">1</div>
-        </div>
-        <div id="coloring">
-          <h2>Coloring</h2>
-
-          <button class="color">
-            <input
-              type="radio"
-              name="coloring"
-              class="radio"
-              value="classification"
-              onclick="changeColoring(this.value)"
-            />
-            <br />
-            Classification
-          </button>
-          <br />
-          <button class="color">
-            <input
-              type="radio"
-              name="coloring"
-              class="radio"
-              value="rgb"
-              onclick="changeColoring(this.value)"
-            />
-            <br />
-            RGB
-          </button>
-        </div>
-        <div id="exit-vr">
-          <h2>Settings</h2>
-          <button
-            onclick="AFRAME.scenes[0].exitVR()"
-            style="font-size: 20px; padding: 10px"
-          >
-            <p>Exit Immersive</p>
-          </button>
-        </div>
-
-        <div id="addcolor" hidden>
-          <h2>Add Classification</h2>
-          <button
-            id="a1"
-            class="addclass"
-            style="background-color: #c8c8c8"
-            value="1"
-            onclick="addcolor(this.value)"
-            hidden
-          >
-            <p>1</p>
-          </button>
-          <button
-            id="a2"
-            class="addclass"
-            style="background-color: #804e0a; color: white"
-            value="2"
-            onclick="addcolor(this.value)"
-            hidden
-          >
-            <p>2</p>
-          </button>
-          <button
-            id="a3"
-            class="addclass"
-            style="background-color: #167518; color: white"
-            value="3"
-            onclick="addcolor(this.value)"
-            hidden
-          >
-            <p>3</p>
-          </button>
-          <button
-            id="a4"
-            class="addclass"
-            style="background-color: #21a624; color: white"
-            value="4"
-            onclick="addcolor(this.value)"
-          >
-            <p>4</p>
-          </button>
-          <button
-            id="a5"
-            class="addclass"
-            style="background-color: #32ed36"
-            value="5"
-            onclick="addcolor(this.value)"
-          >
-            <p>5</p>
-          </button>
-          <button
-            id="a6"
-            class="addclass"
-            style="background-color: #3a9ebd"
-            value="6"
-            onclick="addcolor(this.value)"
-            hidden
-          >
-            <p>6</p>
-          </button>
-          <button
-            id="a7"
-            class="addclass"
-            style="background-color: #ff0000"
-            value="7"
-            onclick="addcolor(this.value)"
-          >
-            <p>7</p>
-          </button>
-          <button
-            id="a8"
-            class="addclass"
-            style="background-color: #ffff00"
-            value="8"
-            onclick="addcolor(this.value)"
-          >
-            <p>8</p>
-          </button>
-          <button
-            id="a9"
-            class="addclass"
-            style="background-color: #0000ff; color: white"
-            value="9"
-            onclick="addcolor(this.value)"
-          >
-            <p>9</p>
-          </button>
-          <button
-            id="a10"
-            class="addclass"
-            style="background-color: #ed8f02"
-            value="10"
-            onclick="addcolor(this.value)"
-          >
-            <p>10</p>
-          </button>
-          <button
-            id="a11"
-            class="addclass"
-            style="background-color: #ed8f02"
-            value="11"
-            onclick="addcolor(this.value)"
-          >
-            <p>11</p>
-          </button>
-          <button
-            id="a12"
-            class="addclass"
-            style="background-color: #ff00ff"
-            value="12"
-            onclick="addcolor(this.value)"
-          >
-            <p>12</p>
-          </button>
-        </div>
-      </div>
-    </section>
-  </div>
+    <div id="dom-overlay">
+      <section style="display: inline-block; background: white; color: #333333; border-radius: 1em; padding: 1em; margin:0;" id="my-interface">
+        
+        <fieldset style="border:0 none;border-top: 1px solid grey;">
+          <legend>Classification</legend>
+          <input onclick="handleRadio(this)" type="radio" id="class-unclassified" name="pc_class" value="0" checked><label for="class-unclassified"> Unclassified</label>
+          <input onclick="handleRadio(this)" type="radio" id="class-ground" name="pc_class" value="2" checked><label for="class-ground"> Ground</label>
+          <input onclick="handleRadio(this)" type="radio" id="class-vegetation" name="pc_class" value="3" checked><label for="class-veg"> Vegetation</label>
+          <input onclick="handleRadio(this)" type="radio" id="class-building" name="pc_class" value="6" checked><label for="class-veg"> Building</label>
+        </fieldset>
+        
+        <h2>Settings</h2>
+          <button onclick="AFRAME.scenes[0].exitVR()" style="display: block;">Exit Immersive</button>
+      </section>
+    </div>
 
   <script>
     // console.log("Hello")
@@ -593,33 +225,33 @@
     // displays the value of the selected point size below the slider
     let ptsize = document.getElementById("pointsizevalue");
     let slider = document.getElementById("point");
-    ptsize.innerHTML = slider.value;
+    // ptsize.innerHTML = slider.value;
 
     // point size slider
-    slider.oninput = function () {
-      ptsize.innerHTML = this.value;
-      document
-        .getElementById("pointcloud")
-        .setAttribute("lasloader", "pointSize", this.value);
-    };
+    // slider.oninput = function () {
+    //   ptsize.innerHTML = this.value;
+    //   document
+    //     .getElementById("pointcloud")
+    //     .setAttribute("lasloader", "pointSize", this.value);
+    // };
 
     // ray length slider
-    let r = document.querySelector("#raylen");
-    console.log(r);
-    r.addEventListener(
-      "input",
-      function () {
-        raylenvalue.innerHTML = r.value;
-        console.log("ray len changed to " + r.value);
-        document
-          .getElementById("lefthand")
-          .setAttribute("raycaster", "far", r.value);
-        document
-          .getElementById("righthand")
-          .setAttribute("raycaster", "far", r.value);
-      },
-      false
-    );
+    // let r = document.querySelector("#raylen");
+    // console.log(r);
+    // r.addEventListener(
+    //   "input",
+    //   function () {
+    //     raylenvalue.innerHTML = r.value;
+    //     console.log("ray len changed to " + r.value);
+    //     document
+    //       .getElementById("lefthand")
+    //       .setAttribute("raycaster", "far", r.value);
+    //     document
+    //       .getElementById("righthand")
+    //       .setAttribute("raycaster", "far", r.value);
+    //   },
+    //   false
+    // );
 
     addcolor = function (value) {
       console.log("adding color " + value);

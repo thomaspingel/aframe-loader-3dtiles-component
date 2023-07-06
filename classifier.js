@@ -4,13 +4,13 @@ AFRAME.registerComponent("classify", {
     },
     dependencies: ["raycaster"],
     init: function () {
-        if (this.data.hand == "r") {
-          //console.log('should emit');
-          this.h = 1;
-        } else {
-          this.h=0
-        }
-      
+      if (this.data.hand == "r") {
+        //console.log('should emit');
+        this.h = 1;
+      } else {
+        this.h = 0;
+      }
+  
       // console.log(document.querySelector('#pointcloud').object3D);
       // console.log(document.querySelector('#pointcloud').object3D.children[0]);
       //console.log(AFRAME);
@@ -22,10 +22,13 @@ AFRAME.registerComponent("classify", {
       this.el.addEventListener("triggerdown", this.TriggerDown);
       this.el.addEventListener("triggerup", this.TriggerUp);
   
-      this.el.addEventListener("collide", this.TriggerDown);
+      //this.el.addEventListener("click", this.undo);
   
       this.el.addEventListener("gripdown", this.transformTrue);
       this.el.addEventListener("gripup", this.transformFalse);
+  
+      this.el.addEventListener("xbuttondown", this.undo);
+      this.el.addEventListener("ybuttondown", this.redo);
   
       this.el.addEventListener("thumbstickmoved", this.logThumbstick);
     },
@@ -36,6 +39,7 @@ AFRAME.registerComponent("classify", {
     TriggerDown: function (evt) {
       evt.srcElement.components.classify.paint = true;
       console.log("trigger down");
+      document.querySelector("#pointcloud").emit("strokeStart");
     },
     transformTrue: function (evt) {
       document
@@ -46,6 +50,12 @@ AFRAME.registerComponent("classify", {
       document
         .querySelector("#pointcloud")
         .setAttribute("lasloader", "transform", false);
+    },
+    undo: function (evt) {
+      document.querySelector("#pointcloud").emit("undo");
+    },
+    redo: function (evt) {
+      document.querySelector("#pointcloud").emit("redo");
     },
     logThumbstick: function (evt) {
       if (evt.detail.y > 0.55) {
@@ -100,8 +110,6 @@ AFRAME.registerComponent("classify", {
       }
     },
     tick: function (time, timeDelta) {
-      
-      
       /**
        *   Place sphere on the tip of the ray
        */
@@ -141,34 +149,37 @@ AFRAME.registerComponent("classify", {
       // x2+y2+z2=r2 -- equation of a sphere
       let pc = document.querySelector("#pointcloud");
   
-       let selected = [];
+      let selected = [];
       //let pns =pc.components.lasloader.positions;
       if (pc.object3D.children && pc.object3D.children.length > 0) {
-        let pns =pc.components.lasloader.positions;
+        let pns = pc.components.lasloader.positions;
         //let pns = pc.object3D.children[0].geometry.attributes.position.array;
         // let worldpos = new THREE.Vector3();
         // console.log(pc.object3D.getWorldPosition(worldpos));
         let rotation = pc.object3D.rotation;
         let center = pc.object3D.position;
         let scale = pc.object3D.scale;
-        
+  
         let x, y, z, v;
-       
+  
         if (pns) {
           for (let i = 0; i < pns.length; i += 3) {
             x = pns[i];
             y = pns[i + 1];
             z = pns[i + 2];
-            v = new THREE.Vector3(x,y,z);
+            v = new THREE.Vector3(x, y, z);
             v.multiplyScalar(scale.x);
             v.applyEuler(rotation);
             v.add(center);
-            
+  
             //console.log(scale.x);
-            
+  
             //console.log(v);
             // if point is inside the sphere
-            if ((v.x - pos.x) ** 2 + (v.y - pos.y) ** 2 + (v.z - pos.z) ** 2 <= r2) {
+            if (
+              (v.x - pos.x) ** 2 + (v.y - pos.y) ** 2 + (v.z - pos.z) ** 2 <=
+              r2
+            ) {
               //console.log(x+", "+y+", "+z);
               selected.push(i / 3);
             }
@@ -176,9 +187,8 @@ AFRAME.registerComponent("classify", {
         }
   
         // left:0, right:1
-       
-          pc.emit("highlight", { selected: selected, hand: this.h });
-        
+  
+        pc.emit("highlight", { selected: selected, hand: this.h });
       }
   
       // check for intersections every tick
@@ -188,32 +198,30 @@ AFRAME.registerComponent("classify", {
       if (this.paint) {
         //console.log("painting");
         let ids = [];
-        let clns = [];
-        let intersections = this.el.components.raycaster.intersections;
+        //let clns = [];
+        //let intersections = this.el.components.raycaster.intersections;
   
         let ptcld = document.querySelector("#pointcloud");
         // console.log(ptcld.object3D.rotation);
         //ptcld.object3D.rotation.z+=0.01;
         //this.raycaster_intersections = this.el.components.raycaster.intersections;
         //this.raycaster_els = this.els;
-        for (let i = 0; i < intersections.length; i++) {
-          //console.log(intersections[i].index, clns[intersections[i].index]);
-          ids.push(intersections[i].index);
-          //console.log(ptcld.components.lasloader.data.classificationValue);
-          
-        }
+        // for (let i = 0; i < intersections.length; i++) {
+        //   //console.log(intersections[i].index, clns[intersections[i].index]);
+        //   ids.push(intersections[i].index);
+        //   clns.push(ptcld.components.lasloader.data.classificationValue);
+        //   //console.log(ptcld.components.lasloader.data.classificationValue);
+        // }
         //console.log(evt.detail.els);
   
-        if (intersections.length > 0 || selected.length >0) {
+        if (selected.length > 0) {
           //console.log(ptcld.components.lasloader);
           // left:0, right:1
-          
-          ptcld.components.lasloader.classify(ids, this.h);
+  
+          ptcld.components.lasloader.classify(ids, [], this.h);
           //ptcld.components.lasloader.update(ptcld.components.lasloader.data);
         }
       }
-    
-    }
-  
+    },
   });
   
