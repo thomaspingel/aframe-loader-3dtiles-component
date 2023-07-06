@@ -70,6 +70,34 @@ AFRAME.registerComponent('lasloader', {
     this.el.addEventListener('abuttondown', this.reset);
     this.el.addEventListener('click', this.reset);
 
+    /**
+     * Undo and redo
+     */
+    this.undo = [];
+    this.redo = [];
+
+    this.el.addEventListener('strokeStart', function strokeStart(evt){
+      evt.srcElement.components.lasloader.undo.push([]);
+    });
+    this.el.addEventListener('undo', function undo(evt){
+      if(evt.srcElement.components.lasloader.undo.length>0){
+        let stroke = evt.srcElement.components.lasloader.undo.pop()
+        for(let i = stroke.length-1;i>=0; i--){
+          evt.srcElement.components.lasloader.classify(stroke[i][0],stroke[i][1],-1);
+        }
+        evt.srcElement.components.lasloader.redo.push(stroke);
+        console.log("undo "+stroke.length+" changes");
+        console.log(evt.srcElement.components.lasloader.undo);
+      } else {
+        console.log('reached beginning. cannot undo');
+        console.log(evt.srcElement.components.lasloader.undo);
+      }
+      
+    });
+    this.el.addEventListener('redo', function redo(evt){
+
+    });
+
     // will hold list of points to highlight from left, right controllers respectively
     this.selected = new Array([],[]);
 
@@ -230,18 +258,24 @@ AFRAME.registerComponent('lasloader', {
    * @param {*} indices array of point indices to change
    * @param {*} clns equal-length array of classification values to change above points to, in that order
    */ 
-  classify: function(indices,  hand){
+  classify: function(indices,clns, hand){
     //if(indices.length != clns.length){ //error-checking
       //console.log("ERROR: tried to classify point array of length %d with values array of length %d", indices.length, clns.length);
     if(this.classification != null) {
-      //console.log("classifying %d points",indices.length);
-      // for(let i=0; i<indices.length;i++){
-      //   this.classification[indices[i]]=this.data.classificationValue;
-      // }
-
-      //paint whatever is in sphere selection
-      for(let j=0; j<this.selected[hand].length;j++){
-        this.classification[this.selected[hand][j]]=this.data.classificationValue;
+      if(clns.length > 0){ // if is undo action
+        //console.log("classifying %d points",indices.length);
+        for(let i=0; i<indices.length;i++){
+          this.classification[indices[i]]=clns[i];
+        }
+      } else { // if is original stroke action
+        let oldVals= new Array(this.selected[hand].length);
+        //paint whatever is in sphere selection
+        for(let j=0; j<this.selected[hand].length;j++){
+          oldVals[j]=this.classification[this.selected[hand][j]];
+          this.classification[this.selected[hand][j]]=this.data.classificationValue;
+        }
+        this.undo[this.undo.length-1].push([this.selected[hand],oldVals,this.data.classificationValue]);
+        console.log(this.undo);
       }
 
       this.update(this.data);
