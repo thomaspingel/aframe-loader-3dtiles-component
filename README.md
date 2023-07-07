@@ -1,14 +1,13 @@
 # aframe-loader-laz-component
 This is a LAZ/LAS point cloud loader for AframeVR, built off of the NYTimes R&D department's [aframe-loader-3dtiles-component](https://github.com/nytimes/aframe-loader-3dtiles-component) and developed by the [Near Earth Imaging Lab](https://www.nearearthimaginglab.org/) at Virginia Tech.
 ## Example Scene
-IMPORTANT: Download `aframe-loader-laz-component.min.js` located in the `dist` folder and place it in the root directory
 
 ### Without controllers
 ```
 <html>
   <head>
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-    <script src="./aframe-loader-laz-component.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-loader-laz-component/dist/aframe-loader-laz-component.min.js"></script>
   </head>
   <body>
     <a-scene>
@@ -17,6 +16,7 @@ IMPORTANT: Download `aframe-loader-laz-component.min.js` located in the `dist` f
         position="0 0 -50"
         rotation="270 0 0"
         scale="1 1 1"
+        classifier
         lasloader="
           url: https://rawhitten.github.io/chunk.laz;
           pointcloudColoring: classification; 
@@ -32,7 +32,7 @@ IMPORTANT: Download `aframe-loader-laz-component.min.js` located in the `dist` f
 <html>
   <head>
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-    <script src="./aframe-loader-laz-component.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-loader-laz-component/dist/aframe-loader-laz-component.min.js"></script>
   </head>
   <body>
     <a-scene>
