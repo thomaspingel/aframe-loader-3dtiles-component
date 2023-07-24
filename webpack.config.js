@@ -34,6 +34,7 @@ module.exports = {
     three: 'THREE',
     'three/examples/jsm/loaders/GLTFLoader.js': 'THREE',
     'three/examples/jsm/loaders/DRACOLoader.js': 'THREE',
-    'three/examples/jsm/loaders/KTX2Loader.js': 'THREE'
+    'three/examples/jsm/loaders/KTX2Loader.js': 'THREE',
+    'three/examples/jsm/loaders/LASLoader.js': 'THREE'
   }
 };

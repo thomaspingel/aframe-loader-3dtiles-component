@@ -1,9 +1,9 @@
 {
-  "name": "aframe-loader-3dtiles-component",
-  "version": "1.0.6",
-  "description": "A component for displaying OGC 3D Tiles.",
+  "name": "aframe-loader-laz-component",
+  "version": "1.0.0",
+  "description": "A component for displaying LAZ point cloud files, built by modifying the NYTimes R&D 3dtiles loader.",
   "main": "index.js",
-  "unpkg": "dist/aframe-loader-3dtiles-component.min.js",
+  "unpkg": "dist/aframe-loader-laz-component.min.js",
   "scripts": {
     "dist": "npm run dist:min && npm run dist:max",
     "dist:max": "webpack",
@@ -19,7 +19,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nytimes/aframe-loader-3dtiles-component.git"
+    "url": "git+https://github.com/thomaspingel/aframe-loader-laz-component.git"
   },
   "keywords": [
     "aframe",
@@ -28,14 +28,15 @@
     "vr",
     "webvr",
     "webxr",
-    "3dtiles"
+    "laz",
+    "pointcloud"
   ],
-  "author": "NYTimes R&D",
+  "author": "NYTimes R&D, Rebecca Whitten, Pradyumann Singhal, Dr. Thomas Pingel",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/nytimes/aframe-loader-3dtiles-component/issues"
+    "url": "https://github.com/thomaspingel/aframe-loader-laz-component/issues"
   },
-  "homepage": "https://github.com/nytimes/aframe-loader-3dtiles-component#readme",
+  "homepage": "https://github.com/thomaspingel/aframe-loader-laz-component#readme",
   "dependencies": {
     "@babel/cli": "^7.2.3",
     "@babel/core": "^7.3.3",

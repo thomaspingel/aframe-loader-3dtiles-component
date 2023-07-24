@@ -56,7 +56,7 @@ AFRAME.registerComponent('lasloader', {
     cameraEl: { type: 'selector' },
     lefthandEl: {type: 'string', default: null}, //id of left hand controller
     righthandEl: {type: 'string', default: null}, //id of right hand controller
-    pointcloudColoring: { type: 'string', default: "white" },
+    pointcloudColoring: { type: 'string', default: "rgb" },
     pointcloudElevationRange: { type: 'array', default: ['0', '400'] },
     classificationValue: {type: 'number', default: 6},
     pointSize: {type: 'number', default: 1},
@@ -204,7 +204,8 @@ AFRAME.registerComponent('lasloader', {
       }
     }
 
- 
+  this.geometry.setAttribute( 'position', new THREE.BufferAttribute(this.positions,3) );
+    this.geometry.setAttribute( 'color', new THREE.BufferAttribute(this.colors,4) );
 
     // Set colors to classification based on standard color scheme
     for(let i = 0; i < this.classification.length; i++){
@@ -225,11 +226,31 @@ AFRAME.registerComponent('lasloader', {
      * Uses three.js BufferGeometry rotation functions which take radians
      */
     
-    console.log(this.rotation);    
+    console.log(this.rotation);   
+
     this.geometry.rotateX(this.rotation.x * (Math.PI/180));
     this.geometry.rotateY(this.rotation.y * (Math.PI/180));
     this.geometry.rotateZ(this.rotation.z * (Math.PI/180));
+    this.geometry.setAttribute( 'position', new THREE.BufferAttribute(this.positions,3) );
+    this.geometry.setAttribute( 'color', new THREE.BufferAttribute(this.colors,4) ); 
+   
+    // Need this line because colors are UInt8Array and it defaults to expecting Float32Array
+    this.geometry.attributes.color.normalized = true;
 
+    this.geometry.setAttribute( 'classification', new THREE.BufferAttribute(this.classification,1) );
+
+    // Create mesh.
+    this.mesh = new THREE.Points(this.geometry, this.material);
+
+    // Set mesh on entity.
+    this.el.setObject3D('points', this.mesh);
+
+    const geometry = new THREE.BoxGeometry( 100, 100, 100 );
+    const material = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
+    const mesh = new THREE.Mesh( geometry, material );
+    this.el.setObject3D('mesh', mesh);
+     
+    this.el.setAttribute('dynamic-body', 'mass',0);
     let downloadcsv = function()
     {
       // console.log(mesh_var.mesh)
@@ -296,10 +317,10 @@ AFRAME.registerComponent('lasloader', {
     }
   },
   reset: function(evt){
-    console.log('reset');
-    evt.srcElement.object3D.position = new Vector3(evt.srcElement.object3D.position.attrValue.x, evt.srcElement.object3D.position.attrValue.y, evt.srcElement.object3D.position.attrValue.z);
-    evt.srcElement.object3D.rotation = new Vector3(evt.srcElement.object3D.rotation.attrValue.x, evt.srcElement.object3D.rotation.attrValue.y, evt.srcElement.object3D.rotation.attrValue.z);
-    evt.srcElement.object3D.scale = new Vector3(evt.srcElement.object3D.scale.attrValue.x, evt.srcElement.object3D.scale.attrValue.y, evt.srcElement.object3D.scale.attrValue.z);
+   // console.log('reset');
+   // evt.srcElement.object3D.position = new Vector3(evt.srcElement.object3D.position.attrValue.x, evt.srcElement.object3D.position.attrValue.y, evt.srcElement.object3D.position.attrValue.z);
+   // evt.srcElement.object3D.rotation = new Vector3(evt.srcElement.object3D.rotation.attrValue.x, evt.srcElement.object3D.rotation.attrValue.y, evt.srcElement.object3D.rotation.attrValue.z);
+   // evt.srcElement.object3D.scale = new Vector3(evt.srcElement.object3D.scale.attrValue.x, evt.srcElement.object3D.scale.attrValue.y, evt.srcElement.object3D.scale.attrValue.z);
   },
 /**
  * This is where the geometry and mesh of the pointcloud are loaded and 
@@ -315,7 +336,10 @@ AFRAME.registerComponent('lasloader', {
         this.runtime.dispose();
         this.runtime = null;
       }
+
+      // this is the data of the pointcloud
       let model = await this._initCloud();
+      
       // Create geometry.
 
       // calculate center coordinate of bounding box
@@ -473,8 +497,12 @@ AFRAME.registerComponent('lasloader', {
     this.mesh = new THREE.Points(this.geometry, this.material);
 
     // Set mesh on entity.
-    this.el.setObject3D('mesh', this.mesh);
+    this.el.setObject3D('points', this.mesh);
     //this.geometry.rotateY(Math.PI);
+    const geometry = new THREE.BoxGeometry( 100, 100, 100 );
+    const material = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
+    const mesh = new THREE.Mesh( geometry, material );
+    this.el.setObject3D('mesh', mesh);
     
   },
   tick: function(time, timeDelta) {
