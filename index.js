@@ -245,12 +245,12 @@ AFRAME.registerComponent('lasloader', {
     // Set mesh on entity.
     this.el.setObject3D('points', this.mesh);
 
-    const geometry = new THREE.BoxGeometry( 100, 100, 100 );
-    const material = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
+    const geometry = new THREE.BoxGeometry( 0.01, 0.01, 0.01 );
+    const material = new THREE.MeshBasicMaterial( { color: 0xff55aa, opacity:0 } );
     const mesh = new THREE.Mesh( geometry, material );
     this.el.setObject3D('mesh', mesh);
      
-    this.el.setAttribute('dynamic-body', 'mass',0);
+    this.el.setAttribute('dynamic-body', 'mass',0.00000001);
     let downloadcsv = function()
     {
       // console.log(mesh_var.mesh)
