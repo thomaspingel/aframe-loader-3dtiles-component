@@ -36,6 +36,8 @@ AFRAME.registerComponent("classify", {
     document.querySelector('#lefthand').addEventListener("ybuttondown", this.redo);
 
     this.el.addEventListener("thumbstickmoved", this.logThumbstick);
+    document.querySelector('#lefthand').addEventListener("thumbstickmoved", this.fly);
+    document.querySelector('#lefthand').addEventListener("triggerdown", this.fly);
   },
   TriggerUp: function (evt) {
     evt.srcElement.components.classify.paint = false;
@@ -63,6 +65,9 @@ AFRAME.registerComponent("classify", {
     document.querySelector("#pointcloud").emit("redo");
   },
   logThumbstick: function (evt) {
+    /**
+    *  If right joystick is down, shorten ray length
+    */
     if (evt.detail.y > 0.55) {
       console.log("DOWN");
       let curlen =
@@ -77,6 +82,9 @@ AFRAME.registerComponent("classify", {
       document.querySelector("#raylenvalue").innerHTML = curlen + amt;
       document.querySelector("#raylen").value = curlen + amt;
     }
+    /**
+    *  If right joystick is up, increase ray length
+    */
     if (evt.detail.y < -0.55) {
       console.log("UP");
       let curlen =
@@ -91,6 +99,9 @@ AFRAME.registerComponent("classify", {
       document.querySelector("#raylenvalue").innerHTML = curlen + amt;
       document.querySelector("#raylen").value = curlen + amt;
     }
+    /**
+    *  If right joystick is left, make selection sphere smaller
+    */
     if (evt.detail.x < -0.95) {
       console.log("LEFT");
       let currad = document.querySelector(
@@ -102,6 +113,9 @@ AFRAME.registerComponent("classify", {
         .setAttribute("scale", { x: amt, y: amt, z: amt });
       //console.log(currad);
     }
+    /**
+    *  If right joystick is right, make selection sphere bigger
+    */
     if (evt.detail.x > 0.95) {
       console.log("RIGHT");
       let currad = document.querySelector(
@@ -114,16 +128,60 @@ AFRAME.registerComponent("classify", {
       //console.log(currad);
     }
   },
+  
+  /**
+  *   fly: use left thumbstick to "fly" around the scene,
+  *        relative to headset orientation
+  */
+  fly: function(evt){
+    
+    // get camera object
+    let camera = document.querySelector("#cameraRig");
+    //console.log(camera.firstElementChild.object3D.rotation);
+    console.log(camera.object3D.position);
+    let rot = new THREE.Vector3();
+    rot.setFromEuler(camera.firstElementChild.object3D.rotation)
+    
+    // relative speed of motion multiplier
+    let speed = 0.1;
+    
+    // turn orientation vector into direction vector
+    let pitch = rot.x;
+    let yaw = rot.y;
+    let roll = rot.z;
+    let z = -1*Math.cos(yaw)*Math.cos(pitch)
+    let x = -1*Math.sin(yaw)*Math.cos(pitch)
+    let y = Math.sin(pitch)
+    let dir = new THREE.Vector3(x,y,z);
+    //camera.setAttribute('position', camera.object3D.position.add(dir.multiplyScalar(speed)));
+    console.log(dir);
+    // DOWN
+    if (evt.detail.y > 0.95) {
+      camera.setAttribute('position', camera.object3D.position.sub(dir.multiplyScalar(speed)));
+    }
+    
+    // UP
+    if (evt.detail.y < -0.95) {
+      camera.setAttribute('position', camera.object3D.position.add(dir.multiplyScalar(speed)));
+      
+    }
+    
+    // LEFT
+    if(evt.detail.x < -0.95) {}
+    
+    //RIGHT
+    if(evt.detail.x > 0.95) {}
+  },
   tick: function (time, timeDelta) {
     let intersections = this.el.components.raycaster.intersections;
-    console.log(intersections)
+    //console.log(intersections)
     
     let dist = this.el.components.raycaster.data.far; //length of ray
     
-    // Snap the sphere to distance of one of the intersecting points
+    // Snap the sphere to distance of the closest of the intersecting points
     if(intersections.length >0){
-      dist = intersections[intersections.length-1].distance;
-      console.log(dist);
+      dist = intersections[intersections.length - 1].distance; // first point is closest, last point is furthest generally
+      //console.log(dist);
     }
     
     
@@ -139,7 +197,7 @@ AFRAME.registerComponent("classify", {
     );
     // make direction vector a unit vector (length one)
     dir.normalize();
-    // console.log(dir);
+    
 
     // rotate direction vector by controller entity's rotation
     dir.applyEuler(this.el.object3D.rotation);
@@ -148,7 +206,8 @@ AFRAME.registerComponent("classify", {
     dir.multiplyScalar(dist);
 
     // add vector to current origin of the controller
-    let pos = this.el.object3D.position;
+    let camera = document.querySelector("#cameraRig");
+    let pos = camera.object3D.position.clone().add(this.el.object3D.position);
     pos.add(dir);
 
     // set position of sphere to this location
@@ -166,7 +225,7 @@ AFRAME.registerComponent("classify", {
     let r2 =
       document.querySelector("#" + this.data.sphere).object3D.scale.x ** 2;
 
-    // x2+y2+z2=r2 -- equation of a sphere
+   
     let pc = document.querySelector("#pointcloud");
 
     let selected = [];
@@ -196,6 +255,7 @@ AFRAME.registerComponent("classify", {
 
           //console.log(v);
           // if point is inside the sphere
+          // x2+y2+z2=r2 -- equation of a sphere
           if (
             (v.x - pos.x) ** 2 + (v.y - pos.y) ** 2 + (v.z - pos.z) ** 2 <=
             r2
@@ -218,14 +278,15 @@ AFRAME.registerComponent("classify", {
     if (this.paint) {
       //console.log("painting");
       let ids = [];
-      //let clns = [];
+      let clns = [];
       
 
       let ptcld = document.querySelector("#pointcloud");
       // console.log(ptcld.object3D.rotation);
       //ptcld.object3D.rotation.z+=0.01;
       
-      //this.raycaster_els = this.els;
+      
+      // this.raycaster_els = this.els;
       // for (let i = 0; i < intersections.length; i++) {
       //   //console.log(intersections[i].index, clns[intersections[i].index]);
       //   ids.push(intersections[i].index);

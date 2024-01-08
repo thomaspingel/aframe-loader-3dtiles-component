@@ -5,7 +5,8 @@
     <script src="https://cdn.jsdelivr.net/npm/handy-work@3.1.9/build/handy-controls.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aframe-blink-controls/dist/aframe-blink-controls.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aframe-htmlmesh@2.0.1/build/aframe-html.min.js"></script>
-      <script src="https://unpkg.com/aframe-text-geometry-component@0.5.1/dist/aframe-text-geometry-component.min.js"></script>
+    <script src="https://unpkg.com/aframe-text-geometry-component@0.5.1/dist/aframe-text-geometry-component.min.js"></script>
+    <script src="https://rawgit.com/rdub80/aframe-gui/master/dist/aframe-gui.min.js"></script>
 
     <script src="aframe-loader-laz-component.min.js"></script>
     <!--     <script src="./lasloader.js" type="module"></script> -->
@@ -38,6 +39,10 @@
     inspector="url: https://cdn.jsdelivr.net/gh/aframevr/aframe-inspector@master/dist/aframe-inspector.min.js"
   >
     <a-assets>
+      <a-asset-item
+        id="textfont4"
+        src="Assets/DiplomataSC-Regular.ttf"
+      ></a-asset-item>
       <!-- 			<a-mixin id="blink" blink-controls="collisionEntities: #ground;"></a-mixin> -->
       <a-mixin
         id="blink"
@@ -47,10 +52,25 @@
         id="raycaster"
         raycaster="showLine: true; far: 2; lineColor: red; objects: [html], #pointcloud; interval:100;"
       ></a-mixin>
-      
-       
-      <a-asset-item id="optimerBoldFont" src="https://rawgit.com/mrdoob/three.js/dev/examples/fonts/optimer_bold.typeface.json"></a-asset-item>
-    
+      <a-mixin
+        id="menubutton"
+        width="0.2"
+        height="0.08"
+        base-depth="0.005"
+        depth="0.02"
+        hover-color="#ffff00"
+        active-color="#ff0000"
+        on="click"
+        toggle="true"
+        font-color="black"
+        gui-interactable="clickAction:triggerdown; hoverAction:raycaster-intersected"
+      >
+      </a-mixin>
+
+      <a-asset-item
+        id="optimerBoldFont"
+        src="https://rawgit.com/mrdoob/three.js/dev/examples/fonts/optimer_bold.typeface.json"
+      ></a-asset-item>
     </a-assets>
 
     <!-- CONTROLS -->
@@ -96,8 +116,9 @@
         data-right="ray"
         mixin=""
         cursor
+        laser-controls="hand:right"
         classify="sphere:sphereR; hand:r"
-        raycaster="showLine: true; far: 12; lineColor: red; objects: [html], #pointcloud; interval:100; direction:0 -1 -1"
+        raycaster="showLine: true; far: 12; lineColor: red; objects: [gui-interactable], #pointcloud, menu-button; interval:100; direction:0 -1 -1"
       >
         <!--           <a-sphere id="sph" position="0 0 -0.2" material="color:yellow; opacity:0.5" scale="0.12 0.12 0.12" classify></a-sphere> -->
       </a-entity>
@@ -107,40 +128,332 @@
         id="lefthand"
         data-left="ray"
         mixin=""
-        xraycaster="showLine: true; far: 12; lineColor: blue; objects: [html], #pointcloud; interval:100; direction:0 -1 -1"
+        xraycaster="showLine: true; far: 12; lineColor: blue; objects: [html, #menu], #pointcloud; interval:100; direction:0 -1 -1"
         cursor
         xclassify="sphere:sphereL; hand:l"
       >
-        <a-entity text="value: HELLO" material="color: red; src: #texture"></a-entity>
-        <a-entity id="menu">
-
-          <a-box
-            position="-0.042 0.0166 -0.02928"
-            rotation="-80 90 0"
-            scale="0.6 0.5 0.01"
-            material="color: grey"
+        <a-gui-flex-container
+          width="0.2"
+          height="0.2"
+          position="0 0.1 0"
+          rotation="-80 90 0"
+          opacity="0"
+          flex-direction="column"
+          justify-content="flexStart"
+        >
+            
+            <a-gui-flex-container width="0.2" height="0.035" opacity="0">
+            <a-text
+              value="1"
+              color="black"
+              scale="0.1 0.1 0.1"
+              position="-0.092 -0.017 0.015"
+            ></a-text>
+            <a-text
+              value="2"
+              color="black"
+              scale="0.1 0.1 0.1"
+              position="-0.058 -0.017 0.015"
+            ></a-text>
+            <a-text
+              value="3"
+              color="black"
+              scale="0.1 0.1 0.1"
+              position="-0.022 -0.017 0.015"
+            ></a-text>
+            <a-text
+              value="4"
+              color="black"
+              scale="0.1 0.1 0.1"
+              position="0.013 -0.017 0.015"
+            ></a-text>
+            <a-text
+              value="5"
+              color="black"
+              scale="0.1 0.1 0.1"
+              position="0.048 -0.017 0.015"
+            ></a-text>
+            <a-text
+              value="6"
+              color="black"
+              scale="0.1 0.1 0.1"
+              position="0.084 -0.017 0.015"
+            ></a-text>
+            <a-gui-button
+              id="b1"
+              width="0.035"
+              height="0.035"
+              base-depth="0."
+              depth="0.005"
+              gap="0.01"
+              hover-color="#ffff00"
+              on="click"
+              gui-interactable="clickAction:triggerdown; hoverAction:raycaster-intersected"
+              background-color="#c8c8c8"
+              onclick="handleRadio(1)"
+            ></a-gui-button>
+            <a-gui-button
+              id="b2"
+              width="0.035"
+              height="0.035"
+              base-depth="0.001"
+              depth="0.005"
+              gap="0.01"
+              hover-color="#ffff00"
+              on="click"
+              gui-interactable="clickAction:triggerdown; hoverAction:raycaster-intersected"
+              background-color="#804e0a"
+              onclick="handleRadio(2)"
+            ></a-gui-button>
+             <a-gui-button
+              id="b3"
+              width="0.035"
+              height="0.035"
+              base-depth="0.001"
+              depth="0.005"
+              gap="0.01"
+              hover-color="#ffff00"
+              on="click"
+              gui-interactable="clickAction:triggerdown; hoverAction:raycaster-intersected"
+              background-color="#167518"
+              onclick="handleRadio(3)"
+            ></a-gui-button>
+            <a-gui-button
+              id="b4"
+              width="0.035"
+              height="0.035"
+              base-depth="0.001"
+              depth="0.005"
+              gap="0.01"
+              hover-color="#ffff00"
+              on="click"
+              font-color="black"
+              gui-interactable="clickAction:triggerdown; hoverAction:raycaster-intersected"
+              background-color="#21a624"
+              onclick="handleRadio(4)"
+            ></a-gui-button>
+            <a-gui-button
+              id="b5"
+              width="0.035"
+              height="0.035"
+              base-depth="0.001"
+              depth="0.005"
+              gap="0.01"
+              hover-color="#ffff00"
+              on="click"
+              font-color="black"
+              gui-interactable="clickAction:triggerdown; hoverAction:raycaster-intersected"
+              background-color="#32ed36"
+              onclick="handleRadio(5)"
+            ></a-gui-button>
+             <a-gui-button
+              id="b6"
+              width="0.035"
+              height="0.035"
+              base-depth="0.001"
+              depth="0.005"
+              gap="0.01"
+              hover-color="#ffff00"
+              on="click"
+              font-color="black"
+              gui-interactable="clickAction:triggerdown; hoverAction:raycaster-intersected"
+              background-color="#3a9ebd"
+              onclick="handleRadio(6)"
+            ></a-gui-button>
+          </a-gui-flex-container>
+          <a-gui-flex-container width="0.2" height="0.035" opacity="0">
+            <a-text
+              value="7"
+              color="black"
+              scale="0.1 0.1 0.1"
+              position="-0.092 -0.017 0.015"
+            ></a-text>
+            <a-text
+              value="8"
+              color="black"
+              scale="0.1 0.1 0.1"
+              position="-0.058 -0.017 0.015"
+            ></a-text>
+            <a-text
+              value="9"
+              color="black"
+              scale="0.1 0.1 0.1"
+              position="-0.022 -0.017 0.015"
+            ></a-text>
+            <a-text
+              value="10"
+              color="black"
+              scale="0.1 0.1 0.1"
+              position="0.007 -0.017 0.015"
+            ></a-text>
+            <a-text
+              value="11"
+              color="black"
+              scale="0.1 0.1 0.1"
+              position="0.042 -0.017 0.015"
+            ></a-text>
+            <a-text
+              value="12"
+              color="black"
+              scale="0.1 0.1 0.1"
+              position="0.076 -0.017 0.015"
+            ></a-text>
+            <a-gui-button
+              id="b7"
+              width="0.035"
+              height="0.035"
+              base-depth="0.001"
+              depth="0.005"
+              gap="0.01"
+              hover-color="#ffff00"
+              on="click"
+              font-color="black"
+              gui-interactable="clickAction:triggerdown; hoverAction:raycaster-intersected"
+              background-color="#ff0000"
+              onclick="handleRadio(7)"
+            ></a-gui-button>
+            <a-gui-button
+              id="b8"
+              width="0.035"
+              height="0.035"
+              base-depth="0.001"
+              depth="0.005"
+              gap="0.01"
+              hover-color="#ffff00"
+              on="click"
+              font-color="black"
+              gui-interactable="clickAction:triggerdown; hoverAction:raycaster-intersected"
+              background-color="#ffff00"
+              onclick="handleRadio(8)"
+            ></a-gui-button>
+            <a-gui-button
+              id="b9"
+              width="0.035"
+              height="0.035"
+              base-depth="0.001"
+              depth="0.005"
+              gap="0.01"
+              hover-color="#ffff00"
+              on="click"
+              font-color="black"
+              gui-interactable="clickAction:triggerdown; hoverAction:raycaster-intersected"
+              background-color="#0000ff"
+              onclick="handleRadio(9)"
+            ></a-gui-button>
+            <a-gui-button
+              id="b10"
+              width="0.035"
+              height="0.035"
+              base-depth="0.001"
+              depth="0.005"
+              gap="0.01"
+              hover-color="#ffff00"
+              on="click"
+              font-color="black"
+              gui-interactable="clickAction:triggerdown; hoverAction:raycaster-intersected"
+              background-color="#ed8f02"
+              onclick="handleRadio(10)"
+            ></a-gui-button>
+            <a-gui-button
+              id="b11"
+              width="0.035"
+              height="0.035"
+              base-depth="0.001"
+              depth="0.005"
+              gap="0.01"
+              hover-color="#ffff00"
+              on="click"
+              font-color="black"
+              gui-interactable="clickAction:triggerdown; hoverAction:raycaster-intersected"
+              background-color="#ed8f02"
+              onclick="handleRadio(11)"
+            ></a-gui-button>
+            <a-gui-button
+              id="b12"
+              width="0.035"
+              height="0.035"
+              base-depth="0.001"
+              depth="0.005"
+              gap="0.01"
+              hover-color="#ffff00"
+              on="click"
+              font-color="black"
+              gui-interactable="clickAction:triggerdown; hoverAction:raycaster-intersected"
+              background-color="#ff00ff"
+              onclick="handleRadio(12)"
+            ></a-gui-button>
+          </a-gui-flex-container>
+          <a-gui-flex-container
+            width="0.2" height="0.035" opacity="1"
           >
-            <a-text value="Hello, World!" color="black" width="2" z-offset="0.51" position="-0.5 0.4 0"></a-text>
-            <a-entity text-geometry="value: Dog?; font: #optimerBoldFont" material="color:black"></a-entity>
-            <a-box id="b1"
-                   class="menu-button"
-                   position="-0.3 0.1 0.5"
-                   rotation="0 0 0"
-                   scale="0.1 0.1 0.5"
-                   material="color:#167518">
-            </a-box>
-            <a-box id="b2"
-                   class="menu-button"
-                   position="-0.15 0.1 0.5"
-                   rotation="0 0 0"
-                   scale="0.1 0.1 0.5"
-                   material="color:#3a9ebd">
-            </a-box>
-          </a-box>
-        </a-entity>
+            <a-text
+              value="-"
+              color="black"
+              scale="0.1 0.1 0.1"
+              position="-0.09 -0.017 0.015" >
+            </a-text>
+            <a-text
+              value="+"
+              color="black"
+              scale="0.1 0.1 0.1"
+              position="-0.058 -0.017 0.015" >
+            </a-text>
+            <a-text
+              value="Exit VR"
+              color="White"
+              scale="0.08 0.08 0.08"
+              position="-0.028 -0.017 0.015"
+            ></a-text>
+            <a-gui-button
+              id="sizedown"
+              width="0.035"
+              height="0.035"
+              base-depth="0.001"
+              depth="0.005"
+              gap="0.01"
+              hover-color="#ffff00"
+              on="click"
+              font-color="black"
+              gui-interactable="clickAction:triggerdown; hoverAction:raycaster-intersected"
+              background-color="#eeeeee"
+              onclick="size(0.5)"
+            ></a-gui-button>
+            <a-gui-button
+              id="sizeup"
+              width="0.035"
+              height="0.035"
+              base-depth="0.001"
+              depth="0.005"
+              gap="0.01"
+              hover-color="#ffff00"
+              on="click"
+              font-color="black"
+              gui-interactable="clickAction:triggerdown; hoverAction:raycaster-intersected"
+              background-color="#eeeeee"
+              onclick="size(2)"
+            ></a-gui-button>
+            <a-gui-button
+              id="exitvr"
+              width="0.065"
+              height="0.035"
+              base-depth="0.001"
+              depth="0.005"
+              gap="0.01"
+              hover-color="#ffff00"
+              on="click"
+              color="white"
+              onclick="AFRAME.scenes[0].exitVR()"
+            >
+            </a-gui-button>
+          </a-gui-flex-container>
+        </a-gui-flex-container>
+
+      
+ 
+
         <a-entity
           html="cursor:#cursor;html:#my-interface"
-          position="-0.042 0.0166 -0.02928"
+          position="-1.042 -0.0166 -0.02928"
           rotation="-80 90 0"
           scale="0.5 0.5 0.5"
         ></a-entity>
@@ -276,7 +589,7 @@
               <input
                 onclick="handleRadio(this)"
                 type="radio"
-                id="class-unclassified"
+                id="class-unclasified"
                 class="classbtn"
                 name="pc_class"
                 value="5"
@@ -584,15 +897,27 @@
     }
     function handleRadio(data) {
       console.log(data);
-      console.log(data.attributes.value.value);
+
+      //unselect current button
+      let curval =
+        document.getElementById("pointcloud").components.lasloader.data
+          .classificationValue;
+      console.log(curval);
+      document
+        .querySelector("#b" + curval)
+        .setAttribute("border-color", "lightgray");
+      //document.querySelector("#b"+curval).setAttribute("toggle-state","false")
+
+      //console.log(data.attributes.value.value);
       console.log(document.getElementById("pointcloud").components.lasloader);
       document
         .getElementById("pointcloud")
-        .setAttribute(
-          "lasloader",
-          "classificationValue",
-          data.attributes.value.value
-        );
+        .setAttribute("lasloader", "classificationValue", data);
+      console.log(document.getElementById("b" + data));
+      //set border color of selected button to gray
+      document
+        .getElementById("b" + data)
+        .setAttribute("border-color", "yellow");
       console.log(
         document.getElementById("pointcloud").components.lasloader.data
           .classificationValue
@@ -614,16 +939,26 @@
 
     // displays the value of the selected point size below the slider
     let ptsize = document.getElementById("pointsizevalue");
-    let slider = document.getElementById("point");
+    // let slider = document.getElementById("point");
     // ptsize.innerHTML = slider.value;
 
-    // point size slider
-    // slider.oninput = function () {
-    //   ptsize.innerHTML = this.value;
-    //   document
-    //     .getElementById("pointcloud")
-    //     .setAttribute("lasloader", "pointSize", this.value);
-    // };
+    //point size slider
+    const maxsize = 10;
+    function slider() {
+      let value =
+        document.querySelector("#sizeslider").attributes[12].value * maxsize;
+      console.log(document.querySelector("#sizeslider").attributes[12].value);
+      document
+        .getElementById("pointcloud")
+        .setAttribute("lasloader", "pointSize", value);
+    }
+    function size(x) {
+      let value = document.getElementById("pointcloud").components.lasloader.data.pointSize;
+      // console.log(document.querySelector("#sizeslider").attributes[12].value);
+      document
+        .getElementById("pointcloud")
+        .setAttribute("lasloader", "pointSize", value*x);
+    }
 
     // ray length slider
     // let r = document.querySelector("#raylen");
