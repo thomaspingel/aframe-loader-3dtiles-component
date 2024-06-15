@@ -60,16 +60,20 @@ AFRAME.registerComponent('lasloader', {
     pointcloudElevationRange: { type: 'array', default: ['0', '400'] },
     classificationValue: {type: 'number', default: 6},
     pointSize: {type: 'number', default: 1},
-    transform:{type:'boolean', default: false}
+    transform:{type:'boolean', default: false},
+    from: {type: "number", default:0} // classification value to only change from; 0 means all
   },
   init: async function () {
     //HIGHLIGHT COLOR:
-    this.highlight=[255,255,0]; //yellow
+    this.highlight=[255,255,100]; // light yellow
 
     this.rotation = this.el.components.rotation.attrValue;
     this.el.addEventListener('abuttondown', this.reset);
     this.el.addEventListener('click', this.reset);
 
+    this.lhq = new THREE.Quaternion();
+    this.origRot = new THREE.Quaternion();
+    
     /**
      * Undo and redo
      */
@@ -132,6 +136,10 @@ AFRAME.registerComponent('lasloader', {
     }
     this.righthand = document.querySelector(this.data.righthandEl);
     this.lefthand = document.querySelector(this.data.lefthandEl);
+
+    // original rotation of lefthand controller
+    this.lrot = new THREE.Quaternion().setFromEuler(this.lefthand.object3D.rotation);
+
     //console.log(this.righthand.object3D.position);
     /**
      * Standard Classification Colors
@@ -174,6 +182,7 @@ AFRAME.registerComponent('lasloader', {
     this.positions = model.attributes.POSITION.value;
     
     this.classification = model.attributes.classification.value;
+    //console.log(this.classification);
 
     // if there are RGB values, save in this.rgb
     //    one long array of r, g, b, a for each point
@@ -306,11 +315,20 @@ AFRAME.registerComponent('lasloader', {
         let oldVals= new Array(this.selected[hand].length);
         //paint whatever is in sphere selection
         for(let j=0; j<this.selected[hand].length;j++){
-          oldVals[j]=this.classification[this.selected[hand][j]];
-          this.classification[this.selected[hand][j]]=this.data.classificationValue;
+          oldVals[j]=this.classification[this.selected[hand][j]];   
+          console.log("classifying from %d only", this.data.from);     
+          if(this.data.from > 0){ // if we are changing only points from a certain classification
+            if (oldVals[j] == this.data.from){
+              console.log(oldVals[j]);
+              this.classification[this.selected[hand][j]]=this.data.classificationValue;
+            }
+          } else { // if we are changing from all classifications
+            //console.log(this.data.from);
+            this.classification[this.selected[hand][j]]=this.data.classificationValue;
+          }
         }
         this.undo[this.undo.length-1].push([this.selected[hand],oldVals,this.data.classificationValue]);
-        console.log(this.undo);
+        //console.log(this.undo);
       }
 
       this.update(this.data);
@@ -499,69 +517,83 @@ AFRAME.registerComponent('lasloader', {
     // Set mesh on entity.
     this.el.setObject3D('points', this.mesh);
     //this.geometry.rotateY(Math.PI);
-    const geometry = new THREE.BoxGeometry( 100, 100, 100 );
-    const material = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
-    const mesh = new THREE.Mesh( geometry, material );
-    this.el.setObject3D('mesh', mesh);
+    // const geometry = new THREE.BoxGeometry( 100, 100, 100 );
+    // const material = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
+    // const mesh = new THREE.Mesh( geometry, material );
+    // this.el.setObject3D('mesh', mesh);
     
   },
   tick: function(time, timeDelta) {
-    if(this.righthand != null && this.lefthand != null){
-        // This is all handling the controller transformations
-      if(this.r != null && this.geometry!=null && this.data.transform){
-        this.r1=new Vector3(this.righthand.object3D.position.x, this.righthand.object3D.position.y, this.righthand.object3D.position.z);
-        this.l1=new Vector3(this.lefthand.object3D.position.x, this.lefthand.object3D.position.y, this.lefthand.object3D.position.z);
+   if(this.righthand != null && this.lefthand != null){
+
+    if(this.geometry!=null && this.data.transform){
+      let lhq = new THREE.Quaternion();
+      //q.setFromEuler(this.el.object3D.rotation).normalize();
+      
+      // lhq: left-hand quaternion
+      lhq.setFromEuler(this.lefthand.object3D.rotation);
+      let angleDiff = new THREE.Quaternion();
+      angleDiff.multiplyQuaternions(this.lrot, lhq.invert());
+      this.el.object3D.rotation.setFromQuaternion(angleDiff.clone().multiply(this.origRot), "YXZ");
+      //console.log(angleDiff);
+    
+    }
+    this.lrot.setFromEuler(this.lefthand.object3D.rotation);
+    //     // This is all handling the controller transformations
+    
+    //     this.r1=new Vector3(this.righthand.object3D.position.x, this.righthand.object3D.position.y, this.righthand.object3D.position.z);
+    //     this.l1=new Vector3(this.lefthand.object3D.position.x, this.lefthand.object3D.position.y, this.lefthand.object3D.position.z);
         
-        // current distance vector between right and left hands
-        this.distv1 = this.r1.clone().sub(this.l1);
+    //     // current distance vector between right and left hands
+    //     this.distv1 = this.r1.clone().sub(this.l1);
 
-        // find x, y, z angles between distance vectors (distv, distv1)
-          // find 2d projections of each vector first
-          this.distv1xy = new Vector3(this.distv1.x, this.distv1.y, 0).normalize();
-          this.distv1xz = new Vector3(this.distv1.x, 0, this.distv1.z).normalize();
-          this.distv1yz = new Vector3(0, this.distv1.y, this.distv1.z).normalize();
-          this.distvxy = new Vector3(this.distv.x, this.distv.y, 0).normalize();
-          this.distvxz = new Vector3(this.distv.x, 0, this.distv.z).normalize();
-          this.distvyz = new Vector3(0, this.distv.y, this.distv.z).normalize();
-          let rotScale = 0.3;
-          // find angle components between the two vectors
-          this.dx = rotScale*(Math.atan2(this.distv.y, this.distv.z)-Math.atan2(this.distv1.y, this.distv1.z));
-          this.dy = rotScale*(Math.atan2(this.distv.x, this.distv.z)-Math.atan2(this.distv1.x, this.distv1.z));
-          this.dz = rotScale*(Math.atan2(this.distv.x, this.distv.y)-Math.atan2(this.distv1.x, this.distv1.y));
+    //     // find x, y, z angles between distance vectors (distv, distv1)
+    //       // find 2d projections of each vector first
+    //       this.distv1xy = new Vector3(this.distv1.x, this.distv1.y, 0).normalize();
+    //       this.distv1xz = new Vector3(this.distv1.x, 0, this.distv1.z).normalize();
+    //       this.distv1yz = new Vector3(0, this.distv1.y, this.distv1.z).normalize();
+    //       this.distvxy = new Vector3(this.distv.x, this.distv.y, 0).normalize();
+    //       this.distvxz = new Vector3(this.distv.x, 0, this.distv.z).normalize();
+    //       this.distvyz = new Vector3(0, this.distv.y, this.distv.z).normalize();
+    //       let rotScale = 0.3;
+    //       // find angle components between the two vectors
+    //       this.dx = rotScale*(Math.atan2(this.distv.y, this.distv.z)-Math.atan2(this.distv1.y, this.distv1.z));
+    //       this.dy = rotScale*(Math.atan2(this.distv.x, this.distv.z)-Math.atan2(this.distv1.x, this.distv1.z));
+    //       this.dz = rotScale*(Math.atan2(this.distv.x, this.distv.y)-Math.atan2(this.distv1.x, this.distv1.y));
 
-          //console.log(this.dx+" "+this.dy+" "+this.dz);
-          //console.log(this.dx+" "+this.dy+" "+this.dz);
+    //       //console.log(this.dx+" "+this.dy+" "+this.dz);
+    //       //console.log(this.dx+" "+this.dy+" "+this.dz);
 
-        this.dist1 = this.r1.clone().distanceTo(this.l1);
-        this.dr = this.r1.clone().sub(this.r);
-        this.dl = this.l1.clone().sub(this.l);
-        this.ddist = this.dist1 - this.dist;
-        this.midpoint1 = this.r1.clone().lerp(this.l1, 0.5);    
-        this.dmidpoint = this.midpoint1.clone().sub(this.midpoint);
-        this.da = this.a1 - this.a;
-        let scale = 0.005;
-        let distScale = 1;
+    //     this.dist1 = this.r1.clone().distanceTo(this.l1);
+    //     this.dr = this.r1.clone().sub(this.r);
+    //     this.dl = this.l1.clone().sub(this.l);
+    //     this.ddist = this.dist1 - this.dist;
+    //     this.midpoint1 = this.r1.clone().lerp(this.l1, 0.5);    
+    //     this.dmidpoint = this.midpoint1.clone().sub(this.midpoint);
+    //     this.da = this.a1 - this.a;
+    //     let scale = 0.005;
+    //     let distScale = 1;
 
         
-        //console.log(this.ddist+" "+((this.ddist*scale)+1));
+    //     //console.log(this.ddist+" "+((this.ddist*scale)+1));
         
-        this.el.object3D.position.addScaledVector(this.dmidpoint, distScale); 
-        this.el.object3D.scale.multiplyScalar((this.ddist*scale)+1);
-        this.el.object3D.rotation.y-=this.dy%(Math.PI/4);
-        // this.rot = this.dr.clone().cross(this.dl).multiplyScalar(this.da); 
-        //this.el.object3D.rotation.x-=this.dx%(Math.PI/4);
+    //     this.el.object3D.position.addScaledVector(this.dmidpoint, distScale); 
+    //     this.el.object3D.scale.multiplyScalar((this.ddist*scale)+1);
+    //     this.el.object3D.rotation.y-=this.dy%(Math.PI/4);
+    //     // this.rot = this.dr.clone().cross(this.dl).multiplyScalar(this.da); 
+    //     //this.el.object3D.rotation.x-=this.dx%(Math.PI/4);
         
-        //this.el.object3D.rotation.z+=this.dz;
-        // console.log(this.rot);
-      }
-      this.r = new Vector3(this.righthand.object3D.position.x, this.righthand.object3D.position.y, this.righthand.object3D.position.z);
-      this.l = new Vector3(this.lefthand.object3D.position.x, this.lefthand.object3D.position.y, this.lefthand.object3D.position.z);   
-      this.a = this.r.angleTo(this.l);
-      this.midpoint = this.r.clone().lerp(this.l, 0.5);
-      this.dist = this.r.clone().distanceTo(this.l);
+    //     //this.el.object3D.rotation.z+=this.dz;
+    //     // console.log(this.rot);
+    //   }
+    //   this.r = new Vector3(this.righthand.object3D.position.x, this.righthand.object3D.position.y, this.righthand.object3D.position.z);
+    //   this.l = new Vector3(this.lefthand.object3D.position.x, this.lefthand.object3D.position.y, this.lefthand.object3D.position.z);   
+    //   this.a = this.r.angleTo(this.l);
+    //   this.midpoint = this.r.clone().lerp(this.l, 0.5);
+    //   this.dist = this.r.clone().distanceTo(this.l);
 
-      // previous distance vector between right and left hands
-      this.distv = this.r.clone().sub(this.l);
+    //   // previous distance vector between right and left hands
+    //   this.distv = this.r.clone().sub(this.l);
 
     }
    
